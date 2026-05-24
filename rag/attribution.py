@@ -2,6 +2,24 @@ import re
 from rag.helpers import normalize
 from typing import Dict, List, Set
 
+STOPWORDS = {
+    "the",
+    "a",
+    "an",
+    "is",
+    "are",
+    "was",
+    "were",
+    "in",
+    "on",
+    "of",
+    "to",
+    "for",
+    "and",
+    "or",
+    "when",
+}
+
 
 def extract_citations(answer: str) -> list:
     """
@@ -28,8 +46,12 @@ def strip_citations(text: str) -> str:
 def chunk_supports_answer(answer: str, chunk: str) -> bool:
     clean_answer: str = strip_citations(text=answer)
 
-    answer_words: Set[str] = set(normalize(text=clean_answer).split())
-    chunk_words: Set[str] = set(normalize(text=chunk).split())
+    answer_words: Set[str] = {
+        w for w in normalize(text=clean_answer).split() if w not in STOPWORDS
+    }
+    chunk_words: Set[str] = {
+        w for w in normalize(text=chunk).split() if w not in STOPWORDS
+    }
 
     overlap = len(answer_words & chunk_words)
     coverage = overlap / max(len(answer_words), 1)

@@ -1,6 +1,6 @@
 import numpy as np
 from rag.helpers import normalize
-from rag.attribution import evaluate_faithfulness
+from rag.attribution import evaluate_faithfulness, chunk_supports_answer
 from rag.ingestion import chunk_text_sentences, embed_chunks, build_index
 from rag.bm25 import BM25Retriever
 from rag.hybrid import hybrid_retrieve
@@ -18,33 +18,25 @@ judge = LLMJudge()
 expander = QueryExpander(n_queries=3)
 
 
-
-def is_grounded(answer: str, context_chunks: list) -> bool:
+def is_grounded(answer: str, context_chunks: List[str]) -> bool:
     """
-    Checks wether the answer is supported by the retrieved context.
-
-    Current heuristic:
-    - Returns True if the answer (or part of it) appears in any retrieved chunk
+    Checks wether the answer is supported by ANY retrieved chunk.
     """
-    answer_norm: str = normalize(text=answer)
-
     for chunk in context_chunks:
-        if answer_norm in normalize(text=chunk):
+        if chunk_supports_answer(answer=answer, chunk=chunk):
             return True
 
     return False
 
 
-def is_grounded_top1(answer: str, context_chunks: list) -> bool:
+def is_grounded_top1(answer: str, context_chunks: List[str]) -> bool:
     """
     Checks if the answer is supported by the TOP retrieved chunk only.
-
-    This measures ranking quality (precision).
     """
     if not context_chunks:
         return False
 
-    return normalize(text=answer) in normalize(context_chunks[0])
+    return chunk_supports_answer(answer=answer, chunk=context_chunks[0])
 
 
 def evaluate_answer(predicted, expected):
@@ -111,7 +103,6 @@ def run_pipeline(chunking_fn, text, test_data, label) -> List[Dict[str, Any]]:
         faithful = faithfulness_result["faithful"]
         has_citations = faithfulness_result["has_citations"]
 
-
         # Metrics
         is_correct = evaluate_answer(predicted=answer, expected=expected)
         hit = any(expected.lower() in c.lower() for c in retrieved_texts)
@@ -146,8 +137,7 @@ def run_pipeline(chunking_fn, text, test_data, label) -> List[Dict[str, Any]]:
             print("Answer:", answer)
             print("Chunks:")
             for i, c in enumerate(retrieved_texts):
-                print("f[{i}]", c[:120])
-
+                print(f"[{i}]", c[:120])
 
         results.append(
             {
@@ -159,7 +149,7 @@ def run_pipeline(chunking_fn, text, test_data, label) -> List[Dict[str, Any]]:
                 "llm_correct": llm_correct,
                 "llm_grounded": llm_grounded,
                 "faithful": faithful,
-                "has_citations": has_citations
+                "has_citations": has_citations,
             }
         )
 
@@ -199,6 +189,6 @@ def summarize(results: List[dict]) -> dict:
         "grounded_top1": sum(r["grounded_top1"] for r in results) / total,
         "llm_accuracy": sum(r["llm_correct"] for r in results) / total,
         "llm_groundedness": sum(r["llm_grounded"] for r in results) / total,
-        "faithfulness": sum(r["faithful"] for r in results)/total,
-        "citation_rate": sum(r["has_citations"] for r in results)/total
+        "faithfulness": sum(r["faithful"] for r in results) / total,
+        "citation_rate": sum(r["has_citations"] for r in results) / total,
     }
