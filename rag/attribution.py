@@ -1,6 +1,6 @@
 import re
-from evaluation import normalize
-from typing import Dict, List
+from rag.helpers import normalize
+from typing import Dict, List, Set
 
 
 def extract_citations(answer: str) -> list:
@@ -19,11 +19,22 @@ def extract_citations(answer: str) -> list:
     return [int(c) for c in citations]
 
 
-def chunk_supports_answer(answer: str, chunk: str):
-    answer_norm: str = normalize(text=answer)
-    chunk_norm: str = normalize(text=chunk)
+def strip_citations(text: str) -> str:
+    text = re.sub(r"\[\d+\]", "", text)
+    text = re.sub(r"\(\d+\)", "", text)
+    return text
 
-    return answer_norm in chunk_norm
+
+def chunk_supports_answer(answer: str, chunk: str) -> bool:
+    clean_answer: str = strip_citations(text=answer)
+
+    answer_words: Set[str] = set(normalize(text=clean_answer).split())
+    chunk_words: Set[str] = set(normalize(text=chunk).split())
+
+    overlap = len(answer_words & chunk_words)
+    coverage = overlap / max(len(answer_words), 1)
+
+    return coverage >= 0.5
 
 
 def evaluate_faithfulness(answer: str, chunks: List[str]) -> Dict[str, bool]:

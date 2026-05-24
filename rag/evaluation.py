@@ -1,4 +1,6 @@
 import numpy as np
+from rag.helpers import normalize
+from rag.attribution import evaluate_faithfulness
 from rag.ingestion import chunk_text_sentences, embed_chunks, build_index
 from rag.bm25 import BM25Retriever
 from rag.hybrid import hybrid_retrieve
@@ -15,14 +17,6 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 judge = LLMJudge()
 expander = QueryExpander(n_queries=3)
 
-
-def normalize(text: str) -> str:
-    """
-    Normalize text for comparison:
-    - lowercase
-    - remove spaces
-    """
-    return text.lower().replace("", "")
 
 
 def is_grounded(answer: str, context_chunks: list) -> bool:
@@ -112,6 +106,12 @@ def run_pipeline(chunking_fn, text, test_data, label) -> List[Dict[str, Any]]:
 
         retrieved_texts = [r if isinstance(r, str) else r["chunk"] for r in retrieved]
         answer = generate_answer(query=query, context_chunks=retrieved_texts)
+
+        faithfulness_result = evaluate_faithfulness(answer, retrieved_texts)
+        faithful = faithfulness_result["faithful"]
+        has_citations = faithfulness_result["has_citations"]
+
+
         # Metrics
         is_correct = evaluate_answer(predicted=answer, expected=expected)
         hit = any(expected.lower() in c.lower() for c in retrieved_texts)
@@ -140,6 +140,14 @@ def run_pipeline(chunking_fn, text, test_data, label) -> List[Dict[str, Any]]:
         # print("\n[MULTI-QUERY]")
         # for q in expanded_queries:
         #     print("-", q)
+        if not faithful:
+            print("\n[UNFAITHFUL ANSWER]")
+            print("Q:", query)
+            print("Answer:", answer)
+            print("Chunks:")
+            for i, c in enumerate(retrieved_texts):
+                print("f[{i}]", c[:120])
+
 
         results.append(
             {
@@ -150,6 +158,8 @@ def run_pipeline(chunking_fn, text, test_data, label) -> List[Dict[str, Any]]:
                 "grounded_top1": grounded_top1,
                 "llm_correct": llm_correct,
                 "llm_grounded": llm_grounded,
+                "faithful": faithful,
+                "has_citations": has_citations
             }
         )
 
@@ -189,4 +199,6 @@ def summarize(results: List[dict]) -> dict:
         "grounded_top1": sum(r["grounded_top1"] for r in results) / total,
         "llm_accuracy": sum(r["llm_correct"] for r in results) / total,
         "llm_groundedness": sum(r["llm_grounded"] for r in results) / total,
+        "faithfulness": sum(r["faithful"] for r in results)/total,
+        "citation_rate": sum(r["has_citations"] for r in results)/total
     }
