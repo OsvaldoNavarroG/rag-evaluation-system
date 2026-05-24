@@ -2,6 +2,65 @@
 
 ⏱️ **Time to read: ~1 minute**
 
+🔗 **Repository:**  
+https://github.com/OsvaldoNavarroG/rag-evaluation-project
+
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![RAG](https://img.shields.io/badge/RAG-Evaluation-green)
+![FAISS](https://img.shields.io/badge/FAISS-Vector_Search-orange)
+![BM25](https://img.shields.io/badge/BM25-Hybrid_Retrieval-yellow)
+![OpenAI](https://img.shields.io/badge/OpenAI-LLM-purple)
+![LLM-Judge](https://img.shields.io/badge/LLM-As_Judge-red)
+
+---
+
+# 🏗️ Architecture
+
+```text
+                    ┌─────────────────┐
+                    │   Documents     │
+                    └────────┬────────┘
+                             │
+                             ▼
+                  ┌────────────────────┐
+                  │ Chunking           │
+                  │ Naive / Sentence   │
+                  └────────┬───────────┘
+                           │
+                           ▼
+               ┌─────────────────────────┐
+               │ Embeddings + BM25 Index │
+               │ FAISS + BM25            │
+               └──────────┬──────────────┘
+                          │
+                          ▼
+                ┌──────────────────────┐
+                │ Retrieval            │
+                │ Dense / Hybrid       │
+                │ Multi-Query          │
+                └──────────┬───────────┘
+                           │
+                           ▼
+                ┌──────────────────────┐
+                │ Cross-Encoder        │
+                │ Reranking            │
+                └──────────┬───────────┘
+                           │
+                           ▼
+                ┌──────────────────────┐
+                │ LLM Generation       │
+                │ + Citations          │
+                └──────────┬───────────┘
+                           │
+                           ▼
+               ┌──────────────────────────┐
+               │ Evaluation Layer         │
+               │ Groundedness             │
+               │ Faithfulness             │
+               │ LLM-as-Judge             │
+               └──────────────────────────┘
+```
+
 ---
 
 # 🚀 Key Results
