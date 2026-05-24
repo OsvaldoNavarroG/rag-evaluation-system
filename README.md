@@ -1,176 +1,237 @@
 # RAG Retrieval Optimization & Evaluation
 
-⏱️ Time to read: ~1 minute
+⏱️ **Time to read: ~1 minute**
 
 ---
 
-## 🚀 Key Results
+# 🚀 Key Results
 
-Evaluated multiple RAG configurations using **heuristic and LLM-based metrics**:
+Evaluated multiple RAG configurations using **heuristic, citation-based, and LLM-as-judge evaluation**.
 
-* **Retrieval Hit Rate:** ~86% (consistently high across methods)
-* **LLM Accuracy:** up to **91%**
-* **LLM Groundedness:** up to **91%**
-* **Groundedness (heuristic):** ~41–50%
+### Best Results
 
----
-
-## 🔥 Key Findings
-
-### 1. Evaluation Gap (Critical)
-
-* Heuristic groundedness: ~0.41
-* LLM groundedness: ~0.91
-
-👉 Traditional metrics significantly **underestimate semantic correctness**
+| Metric | Score |
+|---|---:|
+| Retrieval Hit Rate | **0.86** |
+| Accuracy | **0.91** |
+| Groundedness | **0.91** |
+| Top-1 Groundedness | **0.86** |
+| Faithfulness (citations) | **0.82** |
+| Citation Rate | **1.00** |
+| LLM Accuracy | **1.00** |
+| LLM Groundedness | **1.00** |
 
 ---
 
-### 2. Hybrid Retrieval Improves Ranking (Not Recall)
+# 🔥 Key Findings
 
-* Retrieval hit rate unchanged (~0.86)
-* Improved:
+## 1. Sentence Chunking Consistently Improved Quality
 
-  * answer accuracy
-  * groundedness
-  * top-ranked chunk quality
+Sentence-aware chunking outperformed naive chunking across evaluation runs.
 
----
-
-### 3. Multi-Query Retrieval Did NOT Improve Performance
-
-| Metric             | Hybrid + Rerank | Multi-Query + Hybrid + Rerank |
-| ------------------ | --------------- | ----------------------------- |
-| Retrieval Hit Rate | 0.86            | 0.86                          |
-| Accuracy (Naive)   | **0.77**        | 0.73                          |
-| LLM Groundedness   | **0.91**        | 0.86                          |
-
-👉 Multi-query introduced **more noise without improving recall**
-
----
-
-## 🧠 Core Insight
-
-> **Multi-query retrieval is only beneficial when the system is recall-limited.**
-
-In this project:
-
-* Recall already high (~0.86)
-* Bottleneck = **ranking precision**, not retrieval
-
-👉 Adding more queries increased candidate noise and degraded performance
-
----
-
-## 📌 Overview
-
-This project builds and evaluates a RAG pipeline focusing on:
-
-* Retrieval vs generation error analysis
-* Hallucination detection (groundedness)
-* Heuristic vs semantic evaluation
-* Retrieval strategy comparison
-* Query expansion analysis
-
----
-
-## 🧠 Pipeline
+**Best accuracy:**
 
 ```text
-Documents → Chunking → Embeddings → FAISS
-Query → Retrieval (Dense / Hybrid / Multi-Query) → Reranking → LLM → Answer
+Sentence chunking → 0.91
+Naive chunking → 0.86
+```
+
+👉 Chunk boundaries materially affect downstream RAG quality.
+
+---
+
+## 2. Hybrid Retrieval Improved Ranking More Than Recall
+
+Combining:
+
+```text
+Dense retrieval (FAISS)
++
+BM25 lexical retrieval
++
+Cross-encoder reranking
+```
+
+produced stronger ranking quality.
+
+Retrieval recall remained high:
+
+```text
+~0.86
+```
+
+but answer quality and grounding improved.
+
+👉 Bottleneck was **ranking precision**, not retrieval coverage.
+
+---
+
+## 3. Multi-Query Retrieval Did NOT Improve Results
+
+LLM-generated query expansion was evaluated against hybrid reranked retrieval.
+
+| Metric | Hybrid + Rerank | Multi-Query |
+|---|---:|---:|
+| Retrieval Hit Rate | 0.86 | 0.86 |
+| LLM Accuracy | **0.91** | 0.86–0.91 |
+| LLM Groundedness | **0.91** | 0.86–0.91 |
+
+Result:
+
+```text
+No recall gain
+More candidate noise
+No measurable improvement
+```
+
+👉 Multi-query is useful primarily when systems are **recall-limited**.
+
+---
+
+## 4. Lexical Metrics Underestimate Semantic Grounding
+
+Three evaluation layers were compared:
+
+| Evaluation Layer | Example Metric |
+|---|---|
+| Lexical | Groundedness |
+| Citation-based | Faithfulness |
+| Semantic | LLM Judge |
+
+Observed:
+
+```text
+Faithfulness < Groundedness < LLM Groundedness
+```
+
+Meaning:
+
+- lexical metrics are conservative
+- semantic support may exist even when exact wording differs
+- LLM-based evaluation better captures synthesized answers
+
+👉 Traditional overlap metrics can underestimate semantic correctness.
+
+---
+
+# 📌 Project Overview
+
+This project builds and evaluates a **production-style Retrieval-Augmented Generation (RAG) system** focused on:
+
+- retrieval vs generation error analysis
+- hallucination detection
+- citation-based reliability
+- retrieval strategy comparison
+- semantic evaluation
+- ranking optimization
+
+---
+
+# 🧠 Pipeline
+
+```text
+Documents
+→ Chunking (Naive / Sentence)
+→ Embeddings
+→ FAISS + BM25
+→ Hybrid Retrieval
+→ Cross-Encoder Reranking
+→ LLM Generation + Citations
+→ Heuristic + Citation + LLM Evaluation
 ```
 
 ---
 
-## ⚙️ Tech Stack
+# ⚙️ Tech Stack
 
-* FAISS — dense vector retrieval
-* BM25 (rank-bm25) — lexical retrieval
-* sentence-transformers — embeddings + cross-encoder reranker
-* OpenAI API — generation + LLM-based evaluation
-
----
-
-## 🧪 Retrieval Strategies Compared
-
-### Dense Retrieval
-
-* Semantic similarity
-* Strong baseline recall
-
-### Hybrid Retrieval (BM25 + Dense)
-
-* Combines semantic + keyword signals
-* Improves candidate diversity
-
-### Hybrid + Reranking (**Best Performing**)
-
-* Cross-encoder selects best chunks
-* Improves answer quality and grounding
-
-### Multi-Query Retrieval (LLM-based Expansion)
-
-* Generates multiple query variants
-* Intended to improve recall
-
-❗ Result: No improvement due to already high recall
+- **FAISS** — dense vector retrieval
+- **BM25 (rank-bm25)** — lexical retrieval
+- **sentence-transformers** — embeddings + reranker
+- **OpenAI API** — generation + LLM evaluation
+- **Python / regex evaluation layer** — grounding + citation parsing
 
 ---
 
-## 📊 Best Configuration
+# 🧪 Retrieval Strategies Compared
 
-| Metric               | Value    |
-| -------------------- | -------- |
-| Retrieval Hit Rate   | 0.86     |
-| Accuracy             | 0.77     |
-| Groundedness         | 0.50     |
-| Top-1 Groundedness   | 0.45     |
-| **LLM Accuracy**     | **0.91** |
-| **LLM Groundedness** | **0.91** |
+## Dense Retrieval
+
+- semantic similarity baseline
+- strong recall
+
+## Hybrid Retrieval (BM25 + Dense)
+
+- semantic + keyword retrieval
+- improves candidate diversity
+
+## Hybrid + Reranking (**Best Retrieval Strategy**)
+
+- cross-encoder reranks candidates
+- improves precision and answer quality
+
+## Multi-Query Retrieval
+
+- LLM-generated query reformulation
+- tested for recall improvement
+
+Result:
+
+```text
+No measurable benefit
+```
+
+because recall was already high.
 
 ---
 
-## 🔍 Key System Insight
+# 🧪 Evaluation Framework
+
+## Heuristic Metrics
+
+- Accuracy
+- Retrieval Hit Rate
+- Groundedness
+- Top-1 Groundedness
+
+## Citation-Based Metrics
+
+- Citation Rate
+- Faithfulness
+
+## LLM-Judge Metrics
+
+- LLM Accuracy
+- LLM Groundedness
+
+---
+
+# 🔍 Core System Insight
 
 ```text
 If recall is already high:
-→ Improving retrieval inputs (multi-query) adds noise
-→ Improving ranking (reranking, scoring) adds value
+
+→ More queries add noise
+→ Better ranking adds value
+→ Semantic evaluation reveals support missed by lexical metrics
 ```
 
 ---
 
-## 🧠 Evaluation Framework
+# 🎯 What This Demonstrates
 
-### Heuristic Metrics
-
-* Accuracy
-* Retrieval Hit Rate
-* Groundedness
-* Top-1 Groundedness
-
-### LLM-based Metrics
-
-* LLM Accuracy
-* LLM Groundedness
+- End-to-end RAG architecture
+- Hybrid retrieval (BM25 + dense)
+- Cross-encoder reranking
+- Citation parsing + attribution
+- Hallucination / groundedness evaluation
+- LLM-as-judge evaluation
+- Query expansion analysis
+- Retrieval vs ranking decomposition
+- Experimental debugging and metric design
 
 ---
 
-## 🎯 What This Demonstrates
-
-* End-to-end RAG system design
-* Retrieval vs ranking decomposition
-* Hybrid retrieval (BM25 + dense)
-* Cross-encoder reranking
-* Hallucination detection
-* LLM-as-judge evaluation
-* Query expansion analysis
-* **Understanding of when advanced techniques fail**
-
----
-
-## 🚀 How to Run
+# 🚀 How to Run
 
 ```bash
 pip install sentence-transformers faiss-cpu rank-bm25 openai python-dotenv
@@ -179,8 +240,9 @@ python main.py
 
 ---
 
-## 🔧 Next Steps
+# 🔧 Future Improvements
 
-* Score-weighted hybrid retrieval (BM25 vs dense)
-* Larger / noisier datasets to stress recall
-* Query difficulty benchmarking
+- weighted hybrid scoring
+- larger / noisier datasets
+- semantic citation-faithfulness judge
+- retrieval benchmarking by query difficulty
