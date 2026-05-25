@@ -1,6 +1,6 @@
 import numpy as np
-from rag.helpers import normalize
-from rag.attribution import evaluate_faithfulness, chunk_supports_answer
+from rag.attribution import evaluate_faithfulness
+from rag.grounding import is_grounded, is_grounded_top1
 from rag.ingestion import chunk_text_sentences, embed_chunks, build_index
 from rag.bm25 import BM25Retriever
 from rag.hybrid import hybrid_retrieve
@@ -16,27 +16,6 @@ from sentence_transformers import SentenceTransformer
 model = SentenceTransformer("all-MiniLM-L6-v2")
 judge = LLMJudge()
 expander = QueryExpander(n_queries=3)
-
-
-def is_grounded(answer: str, context_chunks: List[str]) -> bool:
-    """
-    Checks wether the answer is supported by ANY retrieved chunk.
-    """
-    for chunk in context_chunks:
-        if chunk_supports_answer(answer=answer, chunk=chunk):
-            return True
-
-    return False
-
-
-def is_grounded_top1(answer: str, context_chunks: List[str]) -> bool:
-    """
-    Checks if the answer is supported by the TOP retrieved chunk only.
-    """
-    if not context_chunks:
-        return False
-
-    return chunk_supports_answer(answer=answer, chunk=context_chunks[0])
 
 
 def evaluate_answer(predicted, expected):

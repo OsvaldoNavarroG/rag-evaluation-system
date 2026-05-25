@@ -14,7 +14,7 @@ from rag.retrieval import dense_retrieve
 from rag.reranking import rerank
 from rag.generation import generate_answer
 from rag.attribution import evaluate_faithfulness, extract_citations
-from rag.evaluation import is_grounded, is_grounded_top1
+from rag.grounding import is_grounded, is_grounded_top1
 from rag.llm_judge import LLMJudge
 from rag.multi_query import MultiQueryRetriever
 from rag.query_expansion import QueryExpander
@@ -36,7 +36,7 @@ def dense_fn(query: str, k: int) -> List[Dict[str, Any]]:
     return dense_retrieve(query=query, index=index, chunks=chunks, model=model, k=k)
 
 
-def hybrid_fn(query: str) -> List[str]:
+def hybrid_fn(query: str):
     return hybrid_retrieve(
         query=query,
         dense_retrieve_fn=dense_fn,
@@ -79,7 +79,7 @@ def run_rag(question: str) -> Dict[str, Any]:
         "answer": answer,
         "citations": citations,
         "groundedness": grounded,
-        "groundedness_top1": grounded_top1,
+        "grounded_top1": grounded_top1,
         "faithfulness": faithfulness_result["faithful"],
         "llm_groundedness": llm_eval["grounded"],
         "retrieved_chunks": retrieved_texts,
