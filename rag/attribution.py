@@ -21,7 +21,7 @@ STOPWORDS = {
 }
 
 
-def extract_citations(answer: str) -> list:
+def extract_citations(answer: str) -> List[int]:
     """
     Extract citation indices from answer.
 

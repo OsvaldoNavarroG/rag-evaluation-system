@@ -4,7 +4,7 @@ from typing import List
 reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 
 
-def rerank(query, retrieved_results):
+def rerank(query: str, retrieved_results):
     pairs: List[tuple] = [(query, r["chunk"]) for r in retrieved_results]
     scores = reranker.predict(pairs)
 
