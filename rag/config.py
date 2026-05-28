@@ -1,0 +1,1 @@
+DOC_PATH = "data/docs.txt"

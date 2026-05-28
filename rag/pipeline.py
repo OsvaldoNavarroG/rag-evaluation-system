@@ -18,6 +18,7 @@ from rag.grounding import is_grounded, is_grounded_top1
 from rag.llm_judge import LLMJudge
 from rag.multi_query import MultiQueryRetriever
 from rag.query_expansion import QueryExpander
+from rag.config import DOC_PATH
 
 # Global model loading
 model: SentenceTransformer = SentenceTransformer(model_name_or_path="all-MiniLM-L6-v2")
@@ -25,7 +26,7 @@ judge = LLMJudge()
 expander = QueryExpander(n_queries=3)
 
 # Build retrieval system once
-text: str = load_documents(path="data/docs.txt")
+text: str = load_documents(path=DOC_PATH)
 chunks: List[str] = chunk_text_sentences(text=text)
 embeddings: np.ndarray = embed_chunks(chunks=chunks)
 index = build_index(embeddings=embeddings)
@@ -36,7 +37,7 @@ def dense_fn(query: str, k: int) -> List[Dict[str, Any]]:
     return dense_retrieve(query=query, index=index, chunks=chunks, model=model, k=k)
 
 
-def hybrid_fn(query: str):
+def hybrid_fn(query: str) -> list:
     return hybrid_retrieve(
         query=query,
         dense_retrieve_fn=dense_fn,
