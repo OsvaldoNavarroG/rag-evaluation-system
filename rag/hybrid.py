@@ -1,18 +1,18 @@
-from typing import List
+from typing import Any, Dict, List
 
 
 def hybrid_retrieve(
     query: str, dense_retrieve_fn, bm25_retriever, k_dense: int = 5, k_bm25: int = 5
-) -> List[str]:
+) -> List[Dict[str, Any]]:
     """
     Combines dense and BM25 retrieval.
     Deduplicates chunks and keeps metadata.
     """
 
-    dense_results = dense_retrieve_fn(query, k=k_dense)
-    bm25_results = bm25_retriever.retrieve(query, k=k_bm25)
+    dense_results: List[Dict[str, Any]] = dense_retrieve_fn(query, k=k_dense)
+    bm25_results: List[Dict[str, Any]] = bm25_retriever.retrieve(query, k=k_bm25)
 
-    combined = {}
+    combined: Dict[str, Dict[str, Any]] = {}
 
     # Add dense results
     for r in dense_results:

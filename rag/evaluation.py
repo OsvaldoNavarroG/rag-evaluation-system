@@ -34,10 +34,10 @@ def run_pipeline(chunking_fn, text, test_data, label) -> List[Dict[str, Any]]:
 
     bm25 = BM25Retriever(chunks=chunks)
 
-    def dense_fn(query: str, k: int):
+    def dense_fn(query: str, k: int) -> List[Dict[str, Any]]:
         return dense_retrieve(query=query, index=index, chunks=chunks, model=model, k=k)
 
-    def hybrid_fn(query: str):
+    def hybrid_fn(query: str) -> List[Dict[str, Any]]:
         return hybrid_retrieve(
             query=query,
             dense_retrieve_fn=dense_fn,
@@ -46,7 +46,7 @@ def run_pipeline(chunking_fn, text, test_data, label) -> List[Dict[str, Any]]:
             k_bm25=5,
         )
 
-    multi_retriever = MultiQueryRetriever(
+    multi_retriever: MultiQueryRetriever = MultiQueryRetriever(
         retriever_fn=hybrid_fn, query_expander=expander
     )
 
