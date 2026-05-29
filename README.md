@@ -2,13 +2,15 @@
 
 ⏱️ **Time to read: ~1 minute**
 
-🔗 **Repository:**  
+🔗 **Repository:**
 https://github.com/OsvaldoNavarroG/rag-evaluation-project
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![RAG](https://img.shields.io/badge/RAG-Evaluation-green)
 ![FAISS](https://img.shields.io/badge/FAISS-Vector_Search-orange)
 ![BM25](https://img.shields.io/badge/BM25-Hybrid_Retrieval-yellow)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-success)
+![Docker](https://img.shields.io/badge/Docker-Deployment-blue)
 ![OpenAI](https://img.shields.io/badge/OpenAI-LLM-purple)
 ![LLM-Judge](https://img.shields.io/badge/LLM-As_Judge-red)
 
@@ -58,6 +60,12 @@ https://github.com/OsvaldoNavarroG/rag-evaluation-project
                │ Groundedness             │
                │ Faithfulness             │
                │ LLM-as-Judge             │
+               └──────────┬───────────────┘
+                          │
+                          ▼
+               ┌──────────────────────────┐
+               │ FastAPI + Docker         │
+               │ Deployable API           │
                └──────────────────────────┘
 ```
 
@@ -69,16 +77,16 @@ Evaluated multiple RAG configurations using **heuristic, citation-based, and LLM
 
 ### Best Results
 
-| Metric | Score |
-|---|---:|
-| Retrieval Hit Rate | **0.86** |
-| Accuracy | **0.91** |
-| Groundedness | **0.91** |
-| Top-1 Groundedness | **0.86** |
+| Metric                   |    Score |
+| ------------------------ | -------: |
+| Retrieval Hit Rate       | **0.86** |
+| Accuracy                 | **0.91** |
+| Groundedness             | **0.91** |
+| Top-1 Groundedness       | **0.86** |
 | Faithfulness (citations) | **0.82** |
-| Citation Rate | **1.00** |
-| LLM Accuracy | **1.00** |
-| LLM Groundedness | **1.00** |
+| Citation Rate            | **1.00** |
+| LLM Accuracy             | **1.00** |
+| LLM Groundedness         | **1.00** |
 
 ---
 
@@ -129,11 +137,11 @@ but answer quality and grounding improved.
 
 LLM-generated query expansion was evaluated against hybrid reranked retrieval.
 
-| Metric | Hybrid + Rerank | Multi-Query |
-|---|---:|---:|
-| Retrieval Hit Rate | 0.86 | 0.86 |
-| LLM Accuracy | **0.91** | 0.86–0.91 |
-| LLM Groundedness | **0.91** | 0.86–0.91 |
+| Metric             | Hybrid + Rerank | Multi-Query |
+| ------------------ | --------------: | ----------: |
+| Retrieval Hit Rate |            0.86 |        0.86 |
+| LLM Accuracy       |        **0.91** |   0.86–0.91 |
+| LLM Groundedness   |        **0.91** |   0.86–0.91 |
 
 Result:
 
@@ -152,10 +160,10 @@ No measurable improvement
 Three evaluation layers were compared:
 
 | Evaluation Layer | Example Metric |
-|---|---|
-| Lexical | Groundedness |
-| Citation-based | Faithfulness |
-| Semantic | LLM Judge |
+| ---------------- | -------------- |
+| Lexical          | Groundedness   |
+| Citation-based   | Faithfulness   |
+| Semantic         | LLM Judge      |
 
 Observed:
 
@@ -165,9 +173,9 @@ Faithfulness < Groundedness < LLM Groundedness
 
 Meaning:
 
-- lexical metrics are conservative
-- semantic support may exist even when exact wording differs
-- LLM-based evaluation better captures synthesized answers
+* lexical metrics are conservative
+* semantic support may exist even when exact wording differs
+* LLM-based evaluation better captures synthesized answers
 
 👉 Traditional overlap metrics can underestimate semantic correctness.
 
@@ -175,14 +183,15 @@ Meaning:
 
 # 📌 Project Overview
 
-This project builds and evaluates a **production-style Retrieval-Augmented Generation (RAG) system** focused on:
+This project builds and evaluates a **deployable Retrieval-Augmented Generation (RAG) system** focused on:
 
-- retrieval vs generation error analysis
-- hallucination detection
-- citation-based reliability
-- retrieval strategy comparison
-- semantic evaluation
-- ranking optimization
+* retrieval vs generation error analysis
+* hallucination detection
+* citation-based reliability
+* retrieval strategy comparison
+* semantic evaluation
+* ranking optimization
+* API deployment
 
 ---
 
@@ -197,17 +206,21 @@ Documents
 → Cross-Encoder Reranking
 → LLM Generation + Citations
 → Heuristic + Citation + LLM Evaluation
+→ FastAPI Endpoint
+→ Docker Deployment
 ```
 
 ---
 
 # ⚙️ Tech Stack
 
-- **FAISS** — dense vector retrieval
-- **BM25 (rank-bm25)** — lexical retrieval
-- **sentence-transformers** — embeddings + reranker
-- **OpenAI API** — generation + LLM evaluation
-- **Python / regex evaluation layer** — grounding + citation parsing
+* **FAISS** — dense vector retrieval
+* **BM25 (rank-bm25)** — lexical retrieval
+* **sentence-transformers** — embeddings + reranker
+* **OpenAI API** — generation + LLM evaluation
+* **FastAPI** — API layer
+* **Docker** — deployment
+* **Python / regex evaluation layer** — grounding + citation parsing
 
 ---
 
@@ -215,23 +228,23 @@ Documents
 
 ## Dense Retrieval
 
-- semantic similarity baseline
-- strong recall
+* semantic similarity baseline
+* strong recall
 
 ## Hybrid Retrieval (BM25 + Dense)
 
-- semantic + keyword retrieval
-- improves candidate diversity
+* semantic + keyword retrieval
+* improves candidate diversity
 
 ## Hybrid + Reranking (**Best Retrieval Strategy**)
 
-- cross-encoder reranks candidates
-- improves precision and answer quality
+* cross-encoder reranks candidates
+* improves precision and answer quality
 
 ## Multi-Query Retrieval
 
-- LLM-generated query reformulation
-- tested for recall improvement
+* LLM-generated query reformulation
+* tested for recall improvement
 
 Result:
 
@@ -247,20 +260,53 @@ because recall was already high.
 
 ## Heuristic Metrics
 
-- Accuracy
-- Retrieval Hit Rate
-- Groundedness
-- Top-1 Groundedness
+* Accuracy
+* Retrieval Hit Rate
+* Groundedness
+* Top-1 Groundedness
 
 ## Citation-Based Metrics
 
-- Citation Rate
-- Faithfulness
+* Citation Rate
+* Faithfulness
 
 ## LLM-Judge Metrics
 
-- LLM Accuracy
-- LLM Groundedness
+* LLM Accuracy
+* LLM Groundedness
+
+---
+
+# 🌐 API Example
+
+POST `/query`
+
+Request:
+
+```json
+{
+  "question": "What is machine learning?"
+}
+```
+
+Response:
+
+```json
+{
+  "answer": "Machine learning is ... [0]",
+  "citations": [0],
+  "groundedness": true,
+  "grounded_top1": true,
+  "faithfulness": true,
+  "llm_groundedness": true
+}
+```
+
+Swagger Docs:
+
+```text
+http://localhost:8000/docs
+```
 
 ---
 
@@ -278,30 +324,62 @@ If recall is already high:
 
 # 🎯 What This Demonstrates
 
-- End-to-end RAG architecture
-- Hybrid retrieval (BM25 + dense)
-- Cross-encoder reranking
-- Citation parsing + attribution
-- Hallucination / groundedness evaluation
-- LLM-as-judge evaluation
-- Query expansion analysis
-- Retrieval vs ranking decomposition
-- Experimental debugging and metric design
+* End-to-end RAG architecture
+* Hybrid retrieval (BM25 + dense)
+* Cross-encoder reranking
+* Citation parsing + attribution
+* Hallucination / groundedness evaluation
+* LLM-as-judge evaluation
+* Query expansion analysis
+* Retrieval vs ranking decomposition
+* FastAPI service deployment
+* Dockerized ML deployment
+* Experimental debugging and metric design
 
 ---
 
-# 🚀 How to Run
+# 🚀 Local Run
 
 ```bash
-pip install sentence-transformers faiss-cpu rank-bm25 openai python-dotenv
-python main.py
+pip install -r requirements.txt
+uvicorn app.api:app --reload
+```
+
+Swagger:
+
+```text
+http://localhost:8000/docs
+```
+
+---
+
+# 🐳 Docker Deployment
+
+Build:
+
+```bash
+docker build -t rag-api .
+```
+
+Run:
+
+```bash
+docker run -p 8000:8000 --env-file .env rag-api
+```
+
+API:
+
+```text
+http://localhost:8000/docs
 ```
 
 ---
 
 # 🔧 Future Improvements
 
-- weighted hybrid scoring
-- larger / noisier datasets
-- semantic citation-faithfulness judge
-- retrieval benchmarking by query difficulty
+* latency instrumentation
+* experiment tracking
+* weighted hybrid scoring
+* semantic citation-faithfulness judge
+* larger / noisier datasets
+* retrieval benchmarking by query difficulty
