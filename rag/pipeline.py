@@ -20,6 +20,9 @@ from rag.multi_query import MultiQueryRetriever
 from rag.query_expansion import QueryExpander
 from rag.config import DOC_PATH
 
+import nltk
+nltk.download("punkt_tab")
+
 # Global model loading
 model: SentenceTransformer = SentenceTransformer(model_name_or_path="all-MiniLM-L6-v2")
 judge = LLMJudge()
@@ -31,7 +34,6 @@ chunks: List[str] = chunk_text_sentences(text=text)
 embeddings: np.ndarray = embed_chunks(chunks=chunks)
 index = build_index(embeddings=embeddings)
 bm25 = BM25Retriever(chunks=chunks)
-
 
 def dense_fn(query: str, k: int) -> List[Dict[str, Any]]:
     return dense_retrieve(query=query, index=index, chunks=chunks, model=model, k=k)
