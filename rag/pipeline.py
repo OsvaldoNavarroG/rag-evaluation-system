@@ -19,6 +19,7 @@ from rag.llm_judge import LLMJudge
 from rag.multi_query import MultiQueryRetriever
 from rag.query_expansion import QueryExpander
 from rag.config import DOC_PATH
+from rag.timing import Timer
 
 import nltk
 nltk.download("punkt_tab")
@@ -57,15 +58,31 @@ multi_retriever: MultiQueryRetriever = MultiQueryRetriever(
 
 
 def run_rag(question: str) -> Dict[str, Any]:
+    timer = Timer()
+    timer.start("total")
+
+    # retrieval
+    timer.start("retrieval")
     retrieved: list = multi_retriever.retrieve(question=question)
+    timer.stop("retrieval")
+
+    # reranking
+    timer.start("reranking")
     reranked: list = rerank(query=question, retrieved_results=retrieved)
     retrieved = reranked[:5]
 
     retrieved_texts: List[str] = [
         r if isinstance(r, str) else r["chunk"] for r in retrieved
     ]
-    answer: str = generate_answer(query=question, context_chunks=retrieved_texts)
+    timer.stop("reranking")
 
+    #generation
+    timer.start("generation")
+    answer: str = generate_answer(query=question, context_chunks=retrieved_texts)
+    timer.stop("generation")
+
+    #evaluation
+    timer.start("evaluation")
     faithfulness_result: Dict[str, bool] = evaluate_faithfulness(
         answer=answer, chunks=retrieved_texts
     )
@@ -77,7 +94,9 @@ def run_rag(question: str) -> Dict[str, Any]:
     llm_eval = judge.evaluate(
         question=question, context_chunks=retrieved_texts, answer=answer
     )
-
+    timer.stop("evaluation")
+    #total
+    timer.stop("total")
     return {
         "answer": answer,
         "citations": citations,
@@ -86,4 +105,5 @@ def run_rag(question: str) -> Dict[str, Any]:
         "faithfulness": faithfulness_result["faithful"],
         "llm_groundedness": llm_eval["grounded"],
         "retrieved_chunks": retrieved_texts,
+        "latency": timer.get()
     }

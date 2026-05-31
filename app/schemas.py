@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 class QueryRequest(BaseModel):
     question: str
@@ -11,3 +11,4 @@ class QueryResponse(BaseModel):
     grounded_top1: Optional[bool] = None
     faithfulness: Optional[bool] = None
     llm_groundedness: Optional[bool] = None
+    latency: Optional[Dict[str, float]] = None
