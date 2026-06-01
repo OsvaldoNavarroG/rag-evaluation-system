@@ -22,6 +22,7 @@ from rag.config import DOC_PATH
 from rag.timing import Timer
 
 import nltk
+
 nltk.download("punkt_tab")
 
 # Global model loading
@@ -35,6 +36,7 @@ chunks: List[str] = chunk_text_sentences(text=text)
 embeddings: np.ndarray = embed_chunks(chunks=chunks)
 index = build_index(embeddings=embeddings)
 bm25 = BM25Retriever(chunks=chunks)
+
 
 def dense_fn(query: str, k: int) -> List[Dict[str, Any]]:
     return dense_retrieve(query=query, index=index, chunks=chunks, model=model, k=k)
@@ -61,9 +63,13 @@ def run_rag(question: str) -> Dict[str, Any]:
     timer = Timer()
     timer.start("total")
 
+    # query expansion
+    timer.start("query_expansion")
+    queries = expander.generate(question=question)
+    timer.stop("query_expansion")
     # retrieval
     timer.start("retrieval")
-    retrieved: list = multi_retriever.retrieve(question=question)
+    retrieved: list = multi_retriever.retrieve(question=question, queries_=queries)
     timer.stop("retrieval")
 
     # reranking
@@ -76,12 +82,12 @@ def run_rag(question: str) -> Dict[str, Any]:
     ]
     timer.stop("reranking")
 
-    #generation
+    # generation
     timer.start("generation")
     answer: str = generate_answer(query=question, context_chunks=retrieved_texts)
     timer.stop("generation")
 
-    #evaluation
+    # evaluation
     timer.start("evaluation")
     faithfulness_result: Dict[str, bool] = evaluate_faithfulness(
         answer=answer, chunks=retrieved_texts
@@ -95,7 +101,7 @@ def run_rag(question: str) -> Dict[str, Any]:
         question=question, context_chunks=retrieved_texts, answer=answer
     )
     timer.stop("evaluation")
-    #total
+    # total
     timer.stop("total")
     return {
         "answer": answer,
@@ -105,5 +111,5 @@ def run_rag(question: str) -> Dict[str, Any]:
         "faithfulness": faithfulness_result["faithful"],
         "llm_groundedness": llm_eval["grounded"],
         "retrieved_chunks": retrieved_texts,
-        "latency": timer.get()
+        "latency": timer.get(),
     }

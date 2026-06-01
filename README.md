@@ -3,7 +3,7 @@
 ⏱️ **Time to read: ~1 minute**
 
 🔗 **Repository:**
-https://github.com/OsvaldoNavarroG/rag-evaluation-project
+https://github.com/OsvaldoNavarroG/rag-evaluation-system
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![RAG](https://img.shields.io/badge/RAG-Evaluation-green)
