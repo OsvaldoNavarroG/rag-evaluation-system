@@ -1,385 +1,481 @@
-# RAG Retrieval Optimization & Evaluation
+# Production-Style RAG System with Evaluation & Benchmarking
 
-⏱️ **Time to read: ~1 minute**
-
-🔗 **Repository:**
-https://github.com/OsvaldoNavarroG/rag-evaluation-system
-
-![Python](https://img.shields.io/badge/Python-3.11-blue)
-![RAG](https://img.shields.io/badge/RAG-Evaluation-green)
-![FAISS](https://img.shields.io/badge/FAISS-Vector_Search-orange)
-![BM25](https://img.shields.io/badge/BM25-Hybrid_Retrieval-yellow)
-![FastAPI](https://img.shields.io/badge/FastAPI-API-success)
-![Docker](https://img.shields.io/badge/Docker-Deployment-blue)
-![OpenAI](https://img.shields.io/badge/OpenAI-LLM-purple)
-![LLM-Judge](https://img.shields.io/badge/LLM-As_Judge-red)
+⏱️ Time to read: ~2 minutes
 
 ---
 
-# 🏗️ Architecture
+## 🚀 Project Overview
 
-```text
-                    ┌─────────────────┐
-                    │   Documents     │
-                    └────────┬────────┘
-                             │
-                             ▼
-                  ┌────────────────────┐
-                  │ Chunking           │
-                  │ Naive / Sentence   │
-                  └────────┬───────────┘
-                           │
-                           ▼
-               ┌─────────────────────────┐
-               │ Embeddings + BM25 Index │
-               │ FAISS + BM25            │
-               └──────────┬──────────────┘
-                          │
-                          ▼
-                ┌──────────────────────┐
-                │ Retrieval            │
-                │ Dense / Hybrid       │
-                │ Multi-Query          │
-                └──────────┬───────────┘
-                           │
-                           ▼
-                ┌──────────────────────┐
-                │ Cross-Encoder        │
-                │ Reranking            │
-                └──────────┬───────────┘
-                           │
-                           ▼
-                ┌──────────────────────┐
-                │ LLM Generation       │
-                │ + Citations          │
-                └──────────┬───────────┘
-                           │
-                           ▼
-               ┌──────────────────────────┐
-               │ Evaluation Layer         │
-               │ Groundedness             │
-               │ Faithfulness             │
-               │ LLM-as-Judge             │
-               └──────────┬───────────────┘
-                          │
-                          ▼
-               ┌──────────────────────────┐
-               │ FastAPI + Docker         │
-               │ Deployable API           │
-               └──────────────────────────┘
-```
+This project builds and evaluates a **production-style Retrieval-Augmented Generation (RAG) system** with:
+
+- Multiple retrieval strategies
+- Cross-encoder reranking
+- Citation-aware generation
+- Faithfulness & hallucination evaluation
+- LLM-as-judge benchmarking
+- FastAPI deployment
+- Docker packaging
+- Latency instrumentation
+- Experimental benchmarking framework
+
+The project focuses not only on answer quality, but also on:
+
+- retrieval vs generation failures
+- ranking quality
+- hallucination detection
+- evaluation reliability
+- latency vs quality tradeoffs
 
 ---
 
-# 🚀 Key Results
+# 🔥 Key Results
 
-Evaluated multiple RAG configurations using **heuristic, citation-based, and LLM-as-judge evaluation**.
+## Best Performing Configuration
 
-### Best Results
+**Hybrid Retrieval + Cross-Encoder Reranking**
 
-| Metric                   |    Score |
-| ------------------------ | -------: |
-| Retrieval Hit Rate       | **0.86** |
-| Accuracy                 | **0.91** |
-| Groundedness             | **0.91** |
-| Top-1 Groundedness       | **0.86** |
-| Faithfulness (citations) | **0.82** |
-| Citation Rate            | **1.00** |
-| LLM Accuracy             | **1.00** |
-| LLM Groundedness         | **1.00** |
+Sentence chunking benchmark:
 
----
-
-# 🔥 Key Findings
-
-## 1. Sentence Chunking Consistently Improved Quality
-
-Sentence-aware chunking outperformed naive chunking across evaluation runs.
-
-**Best accuracy:**
-
-```text
-Sentence chunking → 0.91
-Naive chunking → 0.86
-```
-
-👉 Chunk boundaries materially affect downstream RAG quality.
+| Metric | Result |
+|---|---:|
+| Accuracy | **0.91** |
+| Retrieval Hit Rate | **0.86** |
+| Faithfulness | **0.91** |
+| Groundedness | **0.45** |
+| Top-1 Groundedness | **0.41** |
+| LLM Accuracy | **1.00** |
+| LLM Groundedness | **1.00** |
 
 ---
 
-## 2. Hybrid Retrieval Improved Ranking More Than Recall
+# 🧠 Key Findings
 
-Combining:
+## 1. Hybrid + Reranking Improves Quality
 
-```text
-Dense retrieval (FAISS)
-+
-BM25 lexical retrieval
-+
-Cross-encoder reranking
-```
+Hybrid retrieval improved candidate diversity.
 
-produced stronger ranking quality.
+Cross-encoder reranking then improved:
 
-Retrieval recall remained high:
+- faithfulness
+- grounding
+- top-ranked chunk quality
 
-```text
-~0.86
-```
+while preserving high recall.
 
-but answer quality and grounding improved.
+### Sentence Chunking Results
 
-👉 Bottleneck was **ranking precision**, not retrieval coverage.
-
----
-
-## 3. Multi-Query Retrieval Did NOT Improve Results
-
-LLM-generated query expansion was evaluated against hybrid reranked retrieval.
-
-| Metric             | Hybrid + Rerank | Multi-Query |
-| ------------------ | --------------: | ----------: |
-| Retrieval Hit Rate |            0.86 |        0.86 |
-| LLM Accuracy       |        **0.91** |   0.86–0.91 |
-| LLM Groundedness   |        **0.91** |   0.86–0.91 |
-
-Result:
-
-```text
-No recall gain
-More candidate noise
-No measurable improvement
-```
-
-👉 Multi-query is useful primarily when systems are **recall-limited**.
+| Config | Accuracy | Faithfulness | Avg Latency |
+|---|---:|---:|---:|
+| Dense | 0.91 | 0.82 | 1922 ms |
+| Hybrid | 0.91 | 0.86 | 2396 ms |
+| **Hybrid + Rerank** | **0.91** | **0.91** | **2054 ms** |
+| MultiQuery | 0.91 | 0.86 | 3230 ms |
 
 ---
 
-## 4. Lexical Metrics Underestimate Semantic Grounding
+## 2. Multi-Query Retrieval Did NOT Help
 
-Three evaluation layers were compared:
+LLM-based query expansion increased latency without improving quality.
 
-| Evaluation Layer | Example Metric |
-| ---------------- | -------------- |
-| Lexical          | Groundedness   |
-| Citation-based   | Faithfulness   |
-| Semantic         | LLM Judge      |
+### Observation
 
-Observed:
+| Config | Faithfulness | Latency |
+|---|---:|---:|
+| Hybrid + Rerank | **0.91** | **2054 ms** |
+| MultiQuery | 0.86 | 3230 ms |
 
-```text
-Faithfulness < Groundedness < LLM Groundedness
-```
+### Core Insight
 
-Meaning:
+> Multi-query retrieval is only beneficial when the system is recall-limited.
 
-* lexical metrics are conservative
-* semantic support may exist even when exact wording differs
-* LLM-based evaluation better captures synthesized answers
+In this project:
 
-👉 Traditional overlap metrics can underestimate semantic correctness.
+- retrieval recall already high (~0.86)
+- bottleneck = ranking precision
+
+Adding more queries increased noise and latency.
 
 ---
 
-# 📌 Project Overview
+## 3. Evaluation Gap
 
-This project builds and evaluates a **deployable Retrieval-Augmented Generation (RAG) system** focused on:
+Traditional heuristic metrics underestimate semantic correctness.
 
-* retrieval vs generation error analysis
-* hallucination detection
-* citation-based reliability
-* retrieval strategy comparison
-* semantic evaluation
-* ranking optimization
-* API deployment
+Observed gap:
+
+| Metric | Value |
+|---|---:|
+| Heuristic Groundedness | ~0.45 |
+| LLM Groundedness | ~1.0 |
+
+This motivated:
+
+- LLM-as-judge evaluation
+- citation validation
+- faithfulness checking
 
 ---
 
-# 🧠 Pipeline
+# 🏗️ System Architecture
 
 ```text
 Documents
-→ Chunking (Naive / Sentence)
-→ Embeddings
-→ FAISS + BM25
-→ Hybrid Retrieval
-→ Cross-Encoder Reranking
-→ LLM Generation + Citations
-→ Heuristic + Citation + LLM Evaluation
-→ FastAPI Endpoint
-→ Docker Deployment
+    ↓
+Chunking
+    ↓
+Dense / Hybrid / MultiQuery Retrieval
+    ↓
+Cross-Encoder Reranking
+    ↓
+LLM Generation + Citations
+    ↓
+Faithfulness + Groundedness Evaluation
+    ↓
+Latency Instrumentation
+    ↓
+Benchmark Framework
+```
+
+---
+
+# ⚙️ RAG Pipeline
+
+The system uses a reusable **RAGSystem** architecture.
+
+```text
+RAGSystem
+├── Retrieval
+├── Hybrid Search
+├── MultiQuery Expansion
+├── Reranking
+├── Generation
+├── Evaluation
+└── Latency Tracking
+```
+
+This separates:
+
+```text
+pipeline.py
+→ inference engine
+
+evaluation.py
+→ benchmarking
+
+main.py
+→ experiment orchestration
+
+FastAPI
+→ deployment layer
+```
+
+---
+
+# 🔎 Retrieval Strategies Compared
+
+## Dense Retrieval
+
+Semantic vector similarity using FAISS.
+
+Strengths:
+
+- strong semantic recall
+- simple baseline
+
+---
+
+## Hybrid Retrieval
+
+Combines:
+
+- dense semantic retrieval
+- BM25 lexical retrieval
+
+Improves:
+
+- candidate diversity
+- keyword coverage
+
+---
+
+## Hybrid + Reranking (**Best Performing**)
+
+Cross-encoder reranker selects the best chunks.
+
+Improves:
+
+- ranking precision
+- answer faithfulness
+- grounding
+
+---
+
+## MultiQuery Retrieval
+
+LLM generates alternative query formulations.
+
+Intended to improve recall.
+
+Observed result:
+
+❌ No improvement on this dataset.
+
+---
+
+# 📊 Benchmark Framework
+
+The project includes a configurable benchmark system comparing:
+
+## Retrieval Configurations
+
+- Dense
+- Hybrid
+- Hybrid + Rerank
+- MultiQuery
+
+## Chunking Approaches
+
+- Naive chunking
+- Sentence chunking
+
+## Evaluation Metrics
+
+### Heuristic
+
+- Accuracy
+- Retrieval Hit Rate
+- Groundedness
+- Top-1 Groundedness
+- Faithfulness
+- Citation validation
+
+### LLM-Based
+
+- LLM Accuracy
+- LLM Groundedness
+
+### Performance
+
+- Latency instrumentation
+
+---
+
+# ⏱️ Latency Instrumentation
+
+The system measures:
+
+- query expansion
+- retrieval
+- reranking
+- generation
+- evaluation
+- total latency
+
+Example response:
+
+```json
+{
+  "latency": {
+    "total": 5313.81,
+    "query_expansion": 1409.39,
+    "retrieval": 106.03,
+    "reranking": 224.64,
+    "generation": 1575.64,
+    "evaluation": 1998
+  }
+}
+```
+
+## Key Insight
+
+Latency analysis revealed:
+
+> Evaluation cost can exceed retrieval + reranking combined.
+
+This highlights a practical production tradeoff:
+
+- online evaluation
+vs
+- offline evaluation
+
+---
+
+# 🧪 Evaluation Features
+
+The system validates generated answers using:
+
+## Citation Parsing
+
+Supports:
+
+```text
+[0]
+[1]
+(2)
+```
+
+---
+
+## Faithfulness Checking
+
+Verifies:
+
+- citations exist
+- cited chunks valid
+- cited chunks support answer
+
+This helps detect:
+
+- hallucinations
+- unsupported claims
+- citation misuse
+
+---
+
+## Groundedness
+
+Two variants:
+
+### Groundedness
+
+Supported by **any retrieved chunk**
+
+### Top-1 Groundedness
+
+Supported by **top-ranked chunk**
+
+Used to evaluate:
+
+- retrieval quality
+- ranking quality
+
+---
+
+# 🌐 API Deployment
+
+The project includes a deployed API using **FastAPI**.
+
+Run locally:
+
+```bash
+uvicorn app.api:app --reload
+```
+
+Example request:
+
+```json
+POST /query
+
+{
+  "question": "What is machine learning?"
+}
+```
+
+Example response:
+
+```json
+{
+  "answer": "... [0]",
+  "citations": [0],
+  "groundedness": true,
+  "faithfulness": true,
+  "llm_groundedness": true,
+  "latency": {
+      ...
+  }
+}
+```
+
+---
+
+# 🐳 Docker Support
+
+Containerized deployment supported.
+
+Build:
+
+```bash
+docker build -t rag-app .
+```
+
+Run:
+
+```bash
+docker run -p 8000:8000 rag-app
 ```
 
 ---
 
 # ⚙️ Tech Stack
 
-* **FAISS** — dense vector retrieval
-* **BM25 (rank-bm25)** — lexical retrieval
-* **sentence-transformers** — embeddings + reranker
-* **OpenAI API** — generation + LLM evaluation
-* **FastAPI** — API layer
-* **Docker** — deployment
-* **Python / regex evaluation layer** — grounding + citation parsing
+Core components:
 
----
+- FAISS
+- BM25 (rank-bm25)
+- sentence-transformers
+- Cross-Encoder reranker
+- OpenAI API
+- FastAPI
+- Docker
 
-# 🧪 Retrieval Strategies Compared
+Models:
 
-## Dense Retrieval
-
-* semantic similarity baseline
-* strong recall
-
-## Hybrid Retrieval (BM25 + Dense)
-
-* semantic + keyword retrieval
-* improves candidate diversity
-
-## Hybrid + Reranking (**Best Retrieval Strategy**)
-
-* cross-encoder reranks candidates
-* improves precision and answer quality
-
-## Multi-Query Retrieval
-
-* LLM-generated query reformulation
-* tested for recall improvement
-
-Result:
-
-```text
-No measurable benefit
-```
-
-because recall was already high.
-
----
-
-# 🧪 Evaluation Framework
-
-## Heuristic Metrics
-
-* Accuracy
-* Retrieval Hit Rate
-* Groundedness
-* Top-1 Groundedness
-
-## Citation-Based Metrics
-
-* Citation Rate
-* Faithfulness
-
-## LLM-Judge Metrics
-
-* LLM Accuracy
-* LLM Groundedness
-
----
-
-# 🌐 API Example
-
-POST `/query`
-
-Request:
-
-```json
-{
-  "question": "What is machine learning?"
-}
-```
-
-Response:
-
-```json
-{
-  "answer": "Machine learning is ... [0]",
-  "citations": [0],
-  "groundedness": true,
-  "grounded_top1": true,
-  "faithfulness": true,
-  "llm_groundedness": true
-}
-```
-
-Swagger Docs:
-
-```text
-http://localhost:8000/docs
-```
-
----
-
-# 🔍 Core System Insight
-
-```text
-If recall is already high:
-
-→ More queries add noise
-→ Better ranking adds value
-→ Semantic evaluation reveals support missed by lexical metrics
-```
+- all-MiniLM-L6-v2
+- ms-marco-MiniLM cross-encoder
 
 ---
 
 # 🎯 What This Demonstrates
 
-* End-to-end RAG architecture
-* Hybrid retrieval (BM25 + dense)
-* Cross-encoder reranking
-* Citation parsing + attribution
-* Hallucination / groundedness evaluation
-* LLM-as-judge evaluation
-* Query expansion analysis
-* Retrieval vs ranking decomposition
-* FastAPI service deployment
-* Dockerized ML deployment
-* Experimental debugging and metric design
+This project demonstrates:
+
+✅ End-to-end RAG engineering  
+✅ Retrieval vs ranking analysis  
+✅ Hybrid retrieval  
+✅ Cross-encoder reranking  
+✅ Hallucination detection  
+✅ Citation validation  
+✅ LLM-as-judge evaluation  
+✅ Latency instrumentation  
+✅ API deployment  
+✅ Docker packaging  
+✅ Experimental benchmarking  
+
+Most importantly:
+
+> Understanding not only when advanced techniques work — but when they fail.
 
 ---
 
-# 🚀 Local Run
+# 🚀 How To Run
+
+Install:
 
 ```bash
-pip install -r requirements.txt
+pip install sentence-transformers faiss-cpu rank-bm25 openai fastapi uvicorn python-dotenv
+```
+
+Run benchmark:
+
+```bash
+python main.py
+```
+
+Run API:
+
+```bash
 uvicorn app.api:app --reload
 ```
 
-Swagger:
-
-```text
-http://localhost:8000/docs
-```
-
 ---
 
-# 🐳 Docker Deployment
+# 🔧 Next Improvements
 
-Build:
+Planned improvements:
 
-```bash
-docker build -t rag-api .
-```
-
-Run:
-
-```bash
-docker run -p 8000:8000 --env-file .env rag-api
-```
-
-API:
-
-```text
-http://localhost:8000/docs
-```
-
----
-
-# 🔧 Future Improvements
-
-* latency instrumentation
-* experiment tracking
-* weighted hybrid scoring
-* semantic citation-faithfulness judge
-* larger / noisier datasets
-* retrieval benchmarking by query difficulty
+- Benchmark export (JSON / CSV)
+- Full latency breakdown reports
+- Config-driven experiments
+- Larger/noisier datasets
+- Retrieval difficulty benchmarking
+- Cost-aware evaluation
