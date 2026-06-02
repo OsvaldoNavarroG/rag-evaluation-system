@@ -1,21 +1,8 @@
-import numpy as np
 from rag.attribution import evaluate_faithfulness
 from rag.grounding import is_grounded, is_grounded_top1
-from rag.ingestion import chunk_text_sentences, embed_chunks, build_index
-from rag.bm25 import BM25Retriever
-from rag.hybrid import hybrid_retrieve
-from rag.retrieval import dense_retrieve
-from rag.reranking import rerank
-from rag.generation import generate_answer
-from rag.llm_judge import LLMJudge
-from rag.multi_query import MultiQueryRetriever
-from rag.query_expansion import QueryExpander
+from rag.ingestion import chunk_text_sentences
+from rag.pipeline import RAGSystem, model, judge, expander
 from typing import Any, Dict, List
-from sentence_transformers import SentenceTransformer
-
-model = SentenceTransformer("all-MiniLM-L6-v2")
-judge = LLMJudge()
-expander = QueryExpander(n_queries=3)
 
 
 def evaluate_answer(predicted, expected):
@@ -25,30 +12,19 @@ def evaluate_answer(predicted, expected):
     return expected in predicted
 
 
-def run_pipeline(chunking_fn, text, test_data, label) -> List[Dict[str, Any]]:
+def run_pipeline(
+    chunking_fn,
+    text: str,
+    test_data,
+    label,
+    use_hybrid: bool,
+    use_rerank: bool,
+    use_multiquery: bool,
+) -> List[Dict[str, Any]]:
     print(f"\n===== {label} =====")
 
     chunks: List[str] = chunking_fn(text)
-    embeddings: np.ndarray = embed_chunks(chunks=chunks)
-    index = build_index(embeddings=embeddings)
-
-    bm25 = BM25Retriever(chunks=chunks)
-
-    def dense_fn(query: str, k: int) -> List[Dict[str, Any]]:
-        return dense_retrieve(query=query, index=index, chunks=chunks, model=model, k=k)
-
-    def hybrid_fn(query: str) -> List[Dict[str, Any]]:
-        return hybrid_retrieve(
-            query=query,
-            dense_retrieve_fn=dense_fn,
-            bm25_retriever=bm25,
-            k_dense=5,
-            k_bm25=5,
-        )
-
-    multi_retriever: MultiQueryRetriever = MultiQueryRetriever(
-        retriever_fn=hybrid_fn, query_expander=expander
-    )
+    system = RAGSystem(chunks=chunks, model=model, judge=judge, expander=expander)
 
     results = []
 
@@ -56,27 +32,14 @@ def run_pipeline(chunking_fn, text, test_data, label) -> List[Dict[str, Any]]:
         query = item["question"]
         expected = item["expected"]
 
-        # baseline retrieval
-        # retrieved: list = retrieve(query=query, index=index, chunks=chunks, k=3)
-        # retrieved: list = dense_retrieve(
-        #     query=query, index=index, chunks=chunks, model=model, k=5
-        # )
-
-        # reranked retrieval
-        # retrieved: list = hybrid_retrieve(
-        #     query=query,
-        #     dense_retrieve_fn=dense_fn,
-        #     bm25_retriever=bm25,
-        #     k_dense=5,
-        #     k_bm25=5,
-        # )
-
-        retrieved: list = multi_retriever.retrieve(question=query)
-        reranked: list = rerank(query=query, retrieved_results=retrieved)
-        retrieved = reranked[:5]
-
-        retrieved_texts = [r if isinstance(r, str) else r["chunk"] for r in retrieved]
-        answer = generate_answer(query=query, context_chunks=retrieved_texts)
+        result: Dict[str, Any] = system.query(
+            question=query,
+            use_hybrid=use_hybrid,
+            use_rerank=use_rerank,
+            use_multiquery=use_multiquery,
+        )
+        answer: str = result["answer"]
+        retrieved_texts = result["retrieved_chunks"]
 
         faithfulness_result = evaluate_faithfulness(answer, retrieved_texts)
         faithful = faithfulness_result["faithful"]
@@ -129,13 +92,16 @@ def run_pipeline(chunking_fn, text, test_data, label) -> List[Dict[str, Any]]:
                 "llm_grounded": llm_grounded,
                 "faithful": faithful,
                 "has_citations": has_citations,
+                "latency_ms": result["latency"]["total"],
             }
         )
 
     return results
 
 
-def compare_chunking_approaches(text: str, test_data: List[Dict[str, str]]):
+def compare_chunking_approaches(
+    text: str, test_data: List[Dict[str, str]], **rag_kwargs
+):
     from rag.ingestion import chunk_text as naive_chunk_text
 
     naive_results: List[dict] = run_pipeline(
@@ -143,12 +109,14 @@ def compare_chunking_approaches(text: str, test_data: List[Dict[str, str]]):
         text=text,
         test_data=test_data,
         label="Naive Chunking",
+        **rag_kwargs,
     )
     sentence_results: List[dict] = run_pipeline(
         chunking_fn=chunk_text_sentences,
         text=text,
         test_data=test_data,
         label="Sentence Chunking",
+        **rag_kwargs,
     )
     print("\n===== SUMMARY =====")
     print("Naive:", summarize(results=naive_results))
@@ -160,7 +128,7 @@ def summarize(results: List[dict]) -> dict:
     correct: int = sum(r["correct"] for r in results)
     hits: int = sum(r["retrieval_hit"] for r in results)
     grounded: int = sum(r["grounded"] for r in results)
-
+    latency: int = sum(r["latency_ms"] for r in results)
     return {
         "accuracy": correct / total,
         "retrieval_hit_rate": hits / total,
@@ -170,4 +138,5 @@ def summarize(results: List[dict]) -> dict:
         "llm_groundedness": sum(r["llm_grounded"] for r in results) / total,
         "faithfulness": sum(r["faithful"] for r in results) / total,
         "citation_rate": sum(r["has_citations"] for r in results) / total,
+        "avg_latency_ms": latency / total,
     }

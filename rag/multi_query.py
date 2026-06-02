@@ -11,11 +11,11 @@ class MultiQueryRetriever:
         self.retriever_fn = retriever_fn
         self.query_expander = query_expander
 
-    def retrieve(self, question: str, queries_=None) -> list:
-        if not queries_:
+    def retrieve(self, question: str, expanded_queries=None) -> list:
+        if not expanded_queries:
             queries = self.query_expander.generate(question)
         else:
-            queries = queries_
+            queries = expanded_queries
 
         all_results = {}
 

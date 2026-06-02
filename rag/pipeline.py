@@ -30,9 +30,114 @@ model: SentenceTransformer = SentenceTransformer(model_name_or_path="all-MiniLM-
 judge = LLMJudge()
 expander = QueryExpander(n_queries=3)
 
+
+class RAGSystem:
+    def __init__(self, chunks, model, judge, expander):
+        self.chunks = chunks
+        self.model = model
+        self.judge = judge
+        self.expander = expander
+        embeddings = embed_chunks(chunks=self.chunks)
+        self.index = build_index(embeddings=embeddings)
+        self.bm25 = BM25Retriever(chunks=self.chunks)
+
+    def dense(self, query: str, k: int = 5):
+        return dense_retrieve(
+            query=query, index=self.index, chunks=self.chunks, model=self.model, k=k
+        )
+
+    def hybrid(self, query: str):
+        return hybrid_retrieve(
+            query=query,
+            dense_retrieve_fn=self.dense,
+            bm25_retriever=self.bm25,
+            k_dense=5,
+            k_bm25=5,
+        )
+
+    def multiquery(self, question: str, expanded_queries=None) -> list:
+        multi_retriever = MultiQueryRetriever(
+            retriever_fn=self.hybrid, query_expander=self.expander
+        )
+        return multi_retriever.retrieve(
+            question=question, expanded_queries=expanded_queries
+        )
+
+    def query(
+        self,
+        question: str,
+        use_hybrid: bool = True,
+        use_rerank: bool = True,
+        use_multiquery: bool = True,
+    ):
+        timer = Timer()
+        timer.start("total")
+
+        # retrieval
+        if use_multiquery:
+            timer.start(name="query_expansion")
+            expanded_queries = self.expander.generate(question=question)
+            timer.stop(name="query_expansion")
+            timer.start(name="retrieval")
+            retrieved = self.multiquery(
+                question=question, expanded_queries=expanded_queries
+            )
+            timer.stop(name="retrieval")
+        else:
+            timer.start(name="retrieval")
+            if use_hybrid:
+                retrieved = self.hybrid(question)
+            else:
+                retrieved = self.dense(question)
+            timer.stop(name="retrieval")
+
+        # reranking
+        timer.start(name="reranking")
+        if use_rerank:
+            retrieved = rerank(query=question, retrieved_results=retrieved)[:5]
+        timer.stop(name="reranking")
+        retrieved_texts = [r if isinstance(r, str) else r["chunk"] for r in retrieved]
+
+        # generation
+        timer.start(name="generation")
+        answer = generate_answer(query=question, context_chunks=retrieved_texts)
+        timer.stop(name="generation")
+
+        # Evaluation
+        timer.start(name="evaluation")
+        faithfulness_result = evaluate_faithfulness(
+            answer=answer, chunks=retrieved_texts
+        )
+        citations = extract_citations(answer=answer)
+        grounded = is_grounded(answer=answer, context_chunks=retrieved_texts)
+        grounded_top1 = is_grounded_top1(answer=answer, context_chunks=retrieved_texts)
+
+        llm_eval = self.judge.evaluate(
+            question=question, context_chunks=retrieved_texts, answer=answer
+        )
+        timer.stop(name="evaluation")
+        timer.stop(name="total")
+
+        return {
+            "answer": answer,
+            "citations": citations,
+            "groundedness": grounded,
+            "grounded_top1": grounded_top1,
+            "faithfulness": faithfulness_result["faithful"],
+            "llm_groundedness": llm_eval["grounded"],
+            "retrieved_chunks": retrieved_texts,
+            "latency": timer.get(),
+        }
+
+
 # Build retrieval system once
 text: str = load_documents(path=DOC_PATH)
 chunks: List[str] = chunk_text_sentences(text=text)
+
+default_system: RAGSystem = RAGSystem(
+    chunks=chunks, model=model, judge=judge, expander=expander
+)
+
 embeddings: np.ndarray = embed_chunks(chunks=chunks)
 index = build_index(embeddings=embeddings)
 bm25 = BM25Retriever(chunks=chunks)
@@ -56,60 +161,16 @@ multi_retriever: MultiQueryRetriever = MultiQueryRetriever(
     retriever_fn=hybrid_fn, query_expander=expander
 )
 
-# Reusable inference
 
-
-def run_rag(question: str) -> Dict[str, Any]:
-    timer = Timer()
-    timer.start("total")
-
-    # query expansion
-    timer.start("query_expansion")
-    queries = expander.generate(question=question)
-    timer.stop("query_expansion")
-    # retrieval
-    timer.start("retrieval")
-    retrieved: list = multi_retriever.retrieve(question=question, queries_=queries)
-    timer.stop("retrieval")
-
-    # reranking
-    timer.start("reranking")
-    reranked: list = rerank(query=question, retrieved_results=retrieved)
-    retrieved = reranked[:5]
-
-    retrieved_texts: List[str] = [
-        r if isinstance(r, str) else r["chunk"] for r in retrieved
-    ]
-    timer.stop("reranking")
-
-    # generation
-    timer.start("generation")
-    answer: str = generate_answer(query=question, context_chunks=retrieved_texts)
-    timer.stop("generation")
-
-    # evaluation
-    timer.start("evaluation")
-    faithfulness_result: Dict[str, bool] = evaluate_faithfulness(
-        answer=answer, chunks=retrieved_texts
+def run_rag(
+    question: str,
+    use_hybrid: bool = True,
+    use_rerank: bool = True,
+    use_multiquery: bool = True,
+) -> Dict[str, Any]:
+    return default_system.query(
+        question=question,
+        use_hybrid=use_hybrid,
+        use_rerank=use_rerank,
+        use_multiquery=use_multiquery,
     )
-    citations: List[int] = extract_citations(answer=answer)
-    grounded: bool = is_grounded(answer=answer, context_chunks=retrieved_texts)
-    grounded_top1: bool = is_grounded_top1(
-        answer=answer, context_chunks=retrieved_texts
-    )
-    llm_eval = judge.evaluate(
-        question=question, context_chunks=retrieved_texts, answer=answer
-    )
-    timer.stop("evaluation")
-    # total
-    timer.stop("total")
-    return {
-        "answer": answer,
-        "citations": citations,
-        "groundedness": grounded,
-        "grounded_top1": grounded_top1,
-        "faithfulness": faithfulness_result["faithful"],
-        "llm_groundedness": llm_eval["grounded"],
-        "retrieved_chunks": retrieved_texts,
-        "latency": timer.get(),
-    }

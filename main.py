@@ -2,6 +2,13 @@ from typing import Dict, List
 from rag.ingestion import load_documents
 from rag.evaluation import compare_chunking_approaches
 
+CONFIGS = {
+    "dense": {"use_hybrid": False, "use_rerank": False, "use_multiquery": False},
+    "hybrid": {"use_hybrid": True, "use_rerank": False, "use_multiquery": False},
+    "hybrid_rerank": {"use_hybrid": True, "use_rerank": True, "use_multiquery": False},
+    "multiquery": {"use_hybrid": True, "use_rerank": True, "use_multiquery": True},
+}
+
 # 1. Load and prepare data
 text: str = load_documents(path="data/docs.txt")
 
@@ -74,5 +81,7 @@ test_data: List[Dict[str, str]] = [
     },
 ]
 
+for name, cfg in CONFIGS.items():
+    print(f"\n--- {name.upper()} ---")
 
-compare_chunking_approaches(text=text, test_data=test_data)
+    compare_chunking_approaches(text=text, test_data=test_data, **cfg)
