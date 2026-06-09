@@ -119,8 +119,12 @@ def compare_chunking_approaches(
         **rag_kwargs,
     )
     print("\n===== SUMMARY =====")
-    print("Naive:", summarize(results=naive_results))
-    print("Sentence:", summarize(results=sentence_results))
+    naive_summary: dict = summarize(results=naive_results)
+    sentence_summary: dict = summarize(results=sentence_results)
+    print("Naive:", naive_summary)
+    print("Sentence:", sentence_summary)
+
+    return {"naive": naive_summary, "sentence": sentence_summary}
 
 
 def summarize(results: List[dict]) -> dict:

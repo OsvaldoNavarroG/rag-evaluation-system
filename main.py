@@ -1,6 +1,7 @@
 from typing import Dict, List
 from rag.ingestion import load_documents
 from rag.evaluation import compare_chunking_approaches
+from rag.benchmark_export import export_json
 
 CONFIGS = {
     "dense": {"use_hybrid": False, "use_rerank": False, "use_multiquery": False},
@@ -81,7 +82,12 @@ test_data: List[Dict[str, str]] = [
     },
 ]
 
+benchmark_results = []
 for name, cfg in CONFIGS.items():
     print(f"\n--- {name.upper()} ---")
 
-    compare_chunking_approaches(text=text, test_data=test_data, **cfg)
+    results: dict = compare_chunking_approaches(text=text, test_data=test_data, **cfg)
+    benchmark_results.append({"config_name": name, "config": cfg, "results": results})
+
+output_file = export_json(data=benchmark_results)
+print(f"\nBenchmark exported to: {output_file}")
