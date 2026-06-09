@@ -50,7 +50,7 @@ Answer:
 
 Respond ONLY in valid JSON:
 {{
-"correct":true/false
+"correct":true/false,
 "grounded":true/false
 }}
 """
