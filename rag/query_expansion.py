@@ -28,7 +28,14 @@ Guidelines:
 Question:
 {question}
 
-Return ONLY in valid JSON a list of strings.
+Return ONLY in valid JSON a list of strings with the format:
+{{
+  "queries": [
+    "...",
+    "...",
+    "..."
+  ]
+}}
 """
 
     def generate(self, question):

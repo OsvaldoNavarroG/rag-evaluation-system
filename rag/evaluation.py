@@ -60,19 +60,15 @@ def run_pipeline(
         llm_correct = llm_eval["correct"]
         llm_grounded = llm_eval["grounded"]
 
-        # debug snippet
-        # if llm_grounded and not grounded:
-        #     print("\n[SEMANTIC GROUNDING DETECTED]")
-        #     print("Q:", query)
-        #     print("Answer:", answer)
+        # debug llm judge
+        if llm_correct != is_correct:
+            print("\n[JUDGE DISAGREEMENT]")
+            print("Q:", query)
+            print("Expected:", expected)
+            print("Answer:", answer)
+            print("Heuristic", is_correct)
+            print("LLM", llm_correct)
 
-        # print("\n[HYBRID RETRIEVAL]")
-        # for r in retrieved:
-        #     print(f"{r['source']}: {r['chunk'][:100]}")
-        # expanded_queries = expander.generate(question=query)
-        # print("\n[MULTI-QUERY]")
-        # for q in expanded_queries:
-        #     print("-", q)
         if not faithful:
             print("\n[UNFAITHFUL ANSWER]")
             print("Q:", query)

@@ -39,7 +39,7 @@ def chunk_text_sentences(text, max_words=50, overlap_sentences=1) -> List[str]:
 
         # if adding this sentence exceeds limit -> finalize chunk
         if current_length + sentence_length > max_words:
-            chunks.append("".join(current_chunk))
+            chunks.append(" ".join(current_chunk))
 
             # overlap: keep last N sentences
             current_chunk = (
@@ -51,7 +51,7 @@ def chunk_text_sentences(text, max_words=50, overlap_sentences=1) -> List[str]:
         current_length += sentence_length
 
     if current_chunk:
-        chunks.append("".join(current_chunk))
+        chunks.append(" ".join(current_chunk))
 
     return chunks
 
