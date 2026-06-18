@@ -55,13 +55,11 @@ class RAGSystem:
             k_bm25=5,
         )
 
-    def multiquery(self, question: str, expanded_queries=None) -> list:
+    def multiquery(self, expanded_queries: List[str]) -> list:
         multi_retriever = MultiQueryRetriever(
             retriever_fn=self.hybrid, query_expander=self.expander
         )
-        return multi_retriever.retrieve(
-            question=question, expanded_queries=expanded_queries
-        )
+        return multi_retriever.retrieve(expanded_queries=expanded_queries)
 
     def query(
         self,
@@ -79,9 +77,7 @@ class RAGSystem:
             expanded_queries = self.expander.generate(question=question)
             timer.stop(name="query_expansion")
             timer.start(name="retrieval")
-            retrieved = self.multiquery(
-                question=question, expanded_queries=expanded_queries
-            )
+            retrieved = self.multiquery(expanded_queries=expanded_queries)
             timer.stop(name="retrieval")
         else:
             timer.start(name="retrieval")

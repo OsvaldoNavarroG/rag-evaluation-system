@@ -1,3 +1,6 @@
+from typing import Any, Dict, List
+
+
 class MultiQueryRetriever:
     """
     Expands a query and aggregates retrieval results
@@ -11,16 +14,11 @@ class MultiQueryRetriever:
         self.retriever_fn = retriever_fn
         self.query_expander = query_expander
 
-    def retrieve(self, question: str, expanded_queries=None) -> list:
-        if not expanded_queries:
-            queries = self.query_expander.generate(question)
-        else:
-            queries = expanded_queries
+    def retrieve(self, expanded_queries: List[str]) -> List[Dict[str, Any]]:
+        all_results: Dict[str, Dict[str, Any]] = {}
 
-        all_results = {}
-
-        for q in queries:
-            results = self.retriever_fn(q)
+        for q in expanded_queries:
+            results: List[Dict[str, Any]] = self.retriever_fn(q)
 
             for r in results:
                 chunk = r["chunk"]
@@ -33,4 +31,6 @@ class MultiQueryRetriever:
                     if r.get("score", 0) > all_results[chunk].get("score", 0):
                         all_results[chunk] = r
 
-        return list(all_results.values())
+        all_results_: list = list(all_results.values())
+        all_results_.sort(key=lambda r: r.get("score", 0), reverse=True)
+        return all_results_[:10]
