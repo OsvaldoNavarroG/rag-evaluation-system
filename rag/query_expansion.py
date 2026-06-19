@@ -1,4 +1,5 @@
 from openai import OpenAI
+from typing import List
 import json
 
 client = OpenAI()
@@ -38,7 +39,7 @@ Return ONLY in valid JSON a list of strings with the format:
 }}
 """
 
-    def generate(self, question):
+    def generate(self, question: str) -> List[str]:
         prompt = self._build_prompt(question)
 
         try:
@@ -46,7 +47,7 @@ Return ONLY in valid JSON a list of strings with the format:
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0,
-                response_format={"type":"json_object"}
+                response_format={"type": "json_object"},
             )
 
             content = response.choices[0].message.content.strip()
@@ -55,8 +56,9 @@ Return ONLY in valid JSON a list of strings with the format:
             # Ensure original query is included
             if question not in queries:
                 queries.insert(0, question)
-
-            return queries[: self.n_queries]
+                return queries[: self.n_queries + 1]
+            else:
+                return queries[: self.n_queries]
         except Exception as e:
             print("[QUERY EXPANSION ERROR]", e)
             return [question]
