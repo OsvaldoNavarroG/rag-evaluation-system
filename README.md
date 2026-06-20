@@ -361,6 +361,30 @@ Used to evaluate:
 - retrieval quality
 - ranking quality
 
+## Runtime Diagnostics vs Benchmark Evaluation
+
+The system separates online diagnostics from offline benchmark evaluation.
+
+`RAGSystem.query()` is used by the API and returns lightweight runtime diagnostics:
+
+- groundedness
+- top-1 groundedness
+- faithfulness
+- latency
+
+These metrics are useful for inspecting a single response, but they are not the full benchmark.
+
+`evaluation.py` computes benchmark-level metrics, including:
+
+- heuristic accuracy
+- retrieval hit rate
+- LLM correctness
+- LLM groundedness
+- aggregate latency
+- configuration comparisons
+
+This separation keeps the API useful for live inspection while keeping experimental evaluation in the benchmark layer.
+
 ---
 
 # 🌐 API Deployment

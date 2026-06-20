@@ -64,6 +64,31 @@ class RAGSystem:
         use_rerank: bool = True,
         use_multiquery: bool = True,
     ):
+        """
+        Run a single RAG inference request.
+
+        This method is used by the API layer and returns both the generated answer
+        and lightweight runtime diagnostics.
+
+        Responsibilities:
+        - retrieve relevant chunks
+        - optionally apply hybrid retrieval, multi-query expansion, and reranking
+        - generate an answer with citations
+        - return lightweight heuristic diagnostics:
+            - groundedness
+            - grounded_top1
+            - faithfulness
+            - latency
+
+        Notes:
+        - These diagnostics are intended for runtime inspection, not full
+        benchmark evaluation.
+        - Benchmark-specific metrics suchas accuracy, retrieval hit rate,
+        LLM correctness, aggregate latency, and configuration comparisons are
+        computed in 'evaluation.py'.
+        - Faithfulness and groundedness are heuristic metrics and should be
+        interpreted together with offline benchmark results.
+        """
         timer = Timer()
         timer.start("total")
 
