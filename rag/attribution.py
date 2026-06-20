@@ -72,8 +72,22 @@ def chunk_supports_answer(answer: str, chunk: str) -> bool:
 
 def evaluate_faithfulness(answer: str, chunks: List[str]) -> Dict[str, bool]:
     """
-    Checks whether cited chunks support the answer. 
-    All cited chunks must support the answer.
+    Evaluates whether cited chunks support the generated answer.
+
+    Current definition:
+
+    - The answer must contain citations.
+    - All cited chunk indices must be valid.
+    - Every cited chunk must individually provide sufficient lexical
+      support for the answer according to 'chunk_supports_answer()'.
+
+    Notes:
+    - This is a heuristic metric based on token overlap.
+    - This is stricter than standard groundedness because support is
+      checked only against cited chunks.
+    - Multi-claim answers may be penalized when different claims are
+      supported by different citations.
+    - This metric does NOT verify citation correctness at the claim level
 
     Returns:
     {

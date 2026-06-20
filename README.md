@@ -316,19 +316,31 @@ Supports:
 
 ---
 
-## Faithfulness Checking
+## Faithfulness
 
-Verifies:
+The project evaluates whether generated answers are supported by the cited evidence.
 
-- citations exist
-- cited chunks valid
-- cited chunks support answer
+Current implementation:
 
-This helps detect:
+- Extracts citations from the generated answer
+- Verifies citation indices are valid
+- Checks whether each cited chunk provides lexical support for the answer
 
-- hallucinations
-- unsupported claims
-- citation misuse
+### Limitations
+
+The current implementation uses token-overlap heuristics and is intentionally conservative.
+
+It does **not** yet perform claim-level attribution.
+
+For example:
+
+Answer:
+- Claim A [0]
+- Claim B [1]
+
+may be marked unfaithful if chunk [0] does not support Claim B, even though Claim B is correctly supported by chunk [1].
+
+Future work includes citation-attribution evaluation to assess whether individual claims are supported by the correct cited chunks.
 
 ---
 
@@ -471,11 +483,9 @@ uvicorn app.api:app --reload
 
 # 🔧 Next Improvements
 
-Planned improvements:
+## Planned Improvements
 
-- Benchmark export (JSON / CSV)
-- Full latency breakdown reports
+- Citation attribution evaluation
+- Claim-level faithfulness checking
+- Larger benchmark datasets
 - Config-driven experiments
-- Larger/noisier datasets
-- Retrieval difficulty benchmarking
-- Cost-aware evaluation
