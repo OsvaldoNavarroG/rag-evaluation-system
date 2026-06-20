@@ -6,13 +6,11 @@ class MultiQueryRetriever:
     Expands a query and aggregates retrieval results
     """
 
-    def __init__(self, retriever_fn, query_expander):
+    def __init__(self, retriever_fn):
         """
         retriever_fn: function(query)-> list of results
-        query_expander: QueryExpander instance
         """
         self.retriever_fn = retriever_fn
-        self.query_expander = query_expander
 
     def retrieve(self, expanded_queries: List[str]) -> List[Dict[str, Any]]:
         all_results: Dict[str, Dict[str, Any]] = {}

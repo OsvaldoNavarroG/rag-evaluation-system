@@ -55,9 +55,7 @@ class RAGSystem:
         )
 
     def multiquery(self, expanded_queries: List[str]) -> list:
-        multi_retriever = MultiQueryRetriever(
-            retriever_fn=self.hybrid, query_expander=self.expander
-        )
+        multi_retriever = MultiQueryRetriever(retriever_fn=self.hybrid)
         return multi_retriever.retrieve(expanded_queries=expanded_queries)
 
     def query(
