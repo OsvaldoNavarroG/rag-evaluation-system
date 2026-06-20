@@ -53,12 +53,7 @@ def run_pipeline(
             answer=answer, context_chunks=retrieved_texts
         )
 
-        # evaluate with LLMJudge
-        llm_eval: dict = judge.evaluate(
-            question=query, context_chunks=retrieved_texts, answer=answer
-        )
-        llm_correct = llm_eval["correct"]
-        llm_grounded = llm_eval["grounded"]
+        llm_correct = result["llm_correct"]
 
         # debug llm judge
         if llm_correct != is_correct:
@@ -85,7 +80,7 @@ def run_pipeline(
                 "grounded": grounded,
                 "grounded_top1": grounded_top1,
                 "llm_correct": llm_correct,
-                "llm_grounded": llm_grounded,
+                "llm_grounded": result["llm_groundedness"],
                 "faithful": faithful,
                 "has_citations": has_citations,
                 "latency_ms": result["latency"]["total"],

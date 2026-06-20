@@ -1,5 +1,4 @@
 from typing import Any, Dict, List
-import numpy as np
 from sentence_transformers import SentenceTransformer
 
 from rag.ingestion import (
@@ -37,7 +36,7 @@ class RAGSystem:
         self.model = model
         self.judge = judge
         self.expander = expander
-        embeddings = embed_chunks(chunks=self.chunks)
+        embeddings = embed_chunks(chunks=self.chunks, model=self.model)
         self.index = build_index(embeddings=embeddings)
         self.bm25 = BM25Retriever(chunks=self.chunks)
 
@@ -121,6 +120,7 @@ class RAGSystem:
             "grounded_top1": grounded_top1,
             "faithfulness": faithfulness_result["faithful"],
             "llm_groundedness": llm_eval["grounded"],
+            "llm_correct": llm_eval["correct"],
             "retrieved_chunks": retrieved_texts,
             "latency": timer.get(),
         }
@@ -132,29 +132,6 @@ chunks: List[str] = chunk_text_sentences(text=text)
 
 default_system: RAGSystem = RAGSystem(
     chunks=chunks, model=model, judge=judge, expander=expander
-)
-
-embeddings: np.ndarray = embed_chunks(chunks=chunks)
-index = build_index(embeddings=embeddings)
-bm25 = BM25Retriever(chunks=chunks)
-
-
-def dense_fn(query: str, k: int) -> List[Dict[str, Any]]:
-    return dense_retrieve(query=query, index=index, chunks=chunks, model=model, k=k)
-
-
-def hybrid_fn(query: str) -> list:
-    return hybrid_retrieve(
-        query=query,
-        dense_retrieve_fn=dense_fn,
-        bm25_retriever=bm25,
-        k_dense=5,
-        k_bm25=5,
-    )
-
-
-multi_retriever: MultiQueryRetriever = MultiQueryRetriever(
-    retriever_fn=hybrid_fn, query_expander=expander
 )
 
 

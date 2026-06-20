@@ -1,12 +1,9 @@
 from nltk.tokenize import sent_tokenize
-from sentence_transformers import SentenceTransformer
 from typing import List
 import numpy as np
 
 # import nltk
 # nltk.download("punkt_tab")
-
-model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 def split_sentences(text) -> List[str]:
@@ -56,7 +53,7 @@ def chunk_text_sentences(text, max_words=50, overlap_sentences=1) -> List[str]:
     return chunks
 
 
-def embed_chunks(chunks: List[str]) -> np.ndarray:
+def embed_chunks(chunks: List[str], model) -> np.ndarray:
     embeddings = model.encode(sentences=chunks)
     return np.array(embeddings)
 

@@ -23,14 +23,8 @@ class MultiQueryRetriever:
             for r in results:
                 chunk = r["chunk"]
 
-                # Keep best score if duplicate
+                # Deduplicate by chunk text while preserving first occurrence
                 if chunk not in all_results:
                     all_results[chunk] = r
-                else:
-                    # Optional: keep higher score
-                    if r.get("score", 0) > all_results[chunk].get("score", 0):
-                        all_results[chunk] = r
 
-        all_results_: list = list(all_results.values())
-        all_results_.sort(key=lambda r: r.get("score", 0), reverse=True)
-        return all_results_[:10]
+        return list(all_results.values())
