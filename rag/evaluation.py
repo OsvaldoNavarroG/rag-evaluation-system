@@ -1,4 +1,3 @@
-from rag.attribution import evaluate_faithfulness
 from rag.ingestion import chunk_text_sentences
 from rag.pipeline import RAGSystem, model, judge, expander
 from typing import Any, Dict, List
@@ -40,9 +39,8 @@ def run_pipeline(
         answer: str = result["answer"]
         retrieved_texts = result["retrieved_chunks"]
 
-        faithfulness_result = evaluate_faithfulness(answer, retrieved_texts)
-        faithful = faithfulness_result["faithful"]
-        has_citations = faithfulness_result["has_citations"]
+        faithful = result["faithfulness"]
+        has_citations = result["has_citations"]
 
         # Metrics
         is_correct = evaluate_answer(predicted=answer, expected=expected)
@@ -131,7 +129,7 @@ def summarize(results: List[dict]) -> dict:
         "retrieval_hit_rate": hits / total,
         "groundedness": grounded / total,
         "grounded_top1": sum(r["grounded_top1"] for r in results) / total,
-        "llm_accuracy": sum(r["llm_correct"] for r in results) / total,
+        "llm_correctness": sum(r["llm_correct"] for r in results) / total,
         "llm_groundedness": sum(r["llm_grounded"] for r in results) / total,
         "faithfulness": sum(r["faithful"] for r in results) / total,
         "citation_rate": sum(r["has_citations"] for r in results) / total,

@@ -28,7 +28,7 @@ STOPWORDS = {
     "that",
     "this",
     "as",
-    "such"
+    "such",
 }
 
 
@@ -72,7 +72,8 @@ def chunk_supports_answer(answer: str, chunk: str) -> bool:
 
 def evaluate_faithfulness(answer: str, chunks: List[str]) -> Dict[str, bool]:
     """
-    Checks whether cited chunks support the answer.
+    Checks whether cited chunks support the answer. 
+    All cited chunks must support the answer.
 
     Returns:
     {

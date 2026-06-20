@@ -114,6 +114,7 @@ class RAGSystem:
             "groundedness": grounded,
             "grounded_top1": grounded_top1,
             "faithfulness": faithfulness_result["faithful"],
+            "has_citations": faithfulness_result["has_citations"],
             "retrieved_chunks": retrieved_texts,
             "latency": timer.get(),
         }
