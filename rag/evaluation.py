@@ -1,6 +1,6 @@
 from rag.ingestion import chunk_text_sentences
 from rag.pipeline import RAGSystem, model, judge, expander
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 def evaluate_answer(predicted, expected):
@@ -18,11 +18,12 @@ def run_pipeline(
     use_hybrid: bool,
     use_rerank: bool,
     use_multiquery: bool,
+    verbose: Optional[bool] = False,
 ) -> List[Dict[str, Any]]:
     print(f"\n===== {label} =====")
 
     chunks: List[str] = chunking_fn(text)
-    system = RAGSystem(chunks=chunks, model=model, judge=judge, expander=expander)
+    system = RAGSystem(chunks=chunks, model=model, expander=expander)
 
     results = []
 
@@ -54,23 +55,23 @@ def run_pipeline(
         )
 
         llm_correct = llm_eval["correct"]
+        if verbose:
+            # debug llm judge
+            if llm_correct != is_correct:
+                print("\n[JUDGE DISAGREEMENT]")
+                print("Q:", query)
+                print("Expected:", expected)
+                print("Answer:", answer)
+                print("Heuristic", is_correct)
+                print("LLM", llm_correct)
 
-        # debug llm judge
-        if llm_correct != is_correct:
-            print("\n[JUDGE DISAGREEMENT]")
-            print("Q:", query)
-            print("Expected:", expected)
-            print("Answer:", answer)
-            print("Heuristic", is_correct)
-            print("LLM", llm_correct)
-
-        if not faithful:
-            print("\n[UNFAITHFUL ANSWER]")
-            print("Q:", query)
-            print("Answer:", answer)
-            print("Chunks:")
-            for i, c in enumerate(retrieved_texts):
-                print(f"[{i}]", c[:120])
+            if not faithful:
+                print("\n[UNFAITHFUL ANSWER]")
+                print("Q:", query)
+                print("Answer:", answer)
+                print("Chunks:")
+                for i, c in enumerate(retrieved_texts):
+                    print(f"[{i}]", c[:120])
 
         results.append(
             {

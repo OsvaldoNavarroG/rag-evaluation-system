@@ -31,10 +31,9 @@ expander = QueryExpander(n_queries=3)
 
 
 class RAGSystem:
-    def __init__(self, chunks, model, judge, expander):
+    def __init__(self, chunks, model, expander):
         self.chunks = chunks
         self.model = model
-        self.judge = judge
         self.expander = expander
         embeddings = embed_chunks(chunks=self.chunks, model=self.model)
         self.index = build_index(embeddings=embeddings)
@@ -124,9 +123,7 @@ class RAGSystem:
 text: str = load_documents(path=DOC_PATH)
 chunks: List[str] = chunk_text_sentences(text=text)
 
-default_system: RAGSystem = RAGSystem(
-    chunks=chunks, model=model, judge=judge, expander=expander
-)
+default_system: RAGSystem = RAGSystem(chunks=chunks, model=model, expander=expander)
 
 
 def run_rag(
