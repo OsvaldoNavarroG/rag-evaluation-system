@@ -1,8 +1,8 @@
 import json
-from openai import OpenAI
+from rag.openai_client import get_openai_client
 from typing import List
 
-client = OpenAI()
+client = get_openai_client()
 
 
 class LLMJudge:

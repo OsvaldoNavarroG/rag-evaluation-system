@@ -1,9 +1,7 @@
-from openai import OpenAI
-from dotenv import load_dotenv
 from typing import List
+from rag.openai_client import get_openai_client
 
-load_dotenv()
-client = OpenAI()
+client = get_openai_client()
 
 
 def generate_answer(query: str, context_chunks: List[str]) -> str:
