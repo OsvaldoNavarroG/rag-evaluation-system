@@ -19,6 +19,10 @@ from rag.multi_query import MultiQueryRetriever
 from rag.query_expansion import QueryExpander
 from rag.config import DOC_PATH
 from rag.timing import Timer
+from rag.ingestion import ensure_nltk_resources
+
+ensure_nltk_resources()
+
 
 # Global model loading
 model: SentenceTransformer = SentenceTransformer(model_name_or_path="all-MiniLM-L6-v2")

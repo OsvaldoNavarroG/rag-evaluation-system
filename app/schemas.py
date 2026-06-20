@@ -10,5 +10,4 @@ class QueryResponse(BaseModel):
     groundedness: Optional[bool] = None
     grounded_top1: Optional[bool] = None
     faithfulness: Optional[bool] = None
-    llm_groundedness: Optional[bool] = None
     latency: Optional[Dict[str, float]] = None

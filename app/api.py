@@ -30,7 +30,6 @@ def query_rag(request: QueryRequest):
             groundedness=result["groundedness"],
             grounded_top1=result["grounded_top1"],
             faithfulness=result["faithfulness"],
-            llm_groundedness=result["llm_groundedness"],
             latency=result["latency"],
         )
     except Exception as e:
