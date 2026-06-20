@@ -1,5 +1,4 @@
 from rag.attribution import evaluate_faithfulness
-from rag.grounding import is_grounded, is_grounded_top1
 from rag.ingestion import chunk_text_sentences
 from rag.pipeline import RAGSystem, model, judge, expander
 from typing import Any, Dict, List
@@ -48,10 +47,6 @@ def run_pipeline(
         # Metrics
         is_correct = evaluate_answer(predicted=answer, expected=expected)
         hit = any(expected.lower() in c.lower() for c in retrieved_texts)
-        grounded: bool = is_grounded(answer=answer, context_chunks=retrieved_texts)
-        grounded_top1: bool = is_grounded_top1(
-            answer=answer, context_chunks=retrieved_texts
-        )
 
         llm_correct = result["llm_correct"]
 
@@ -77,8 +72,8 @@ def run_pipeline(
                 "question": query,
                 "correct": is_correct,
                 "retrieval_hit": hit,
-                "grounded": grounded,
-                "grounded_top1": grounded_top1,
+                "grounded": result["groundedness"],
+                "grounded_top1": result["grounded_top1"],
                 "llm_correct": llm_correct,
                 "llm_grounded": result["llm_groundedness"],
                 "faithful": faithful,

@@ -18,6 +18,17 @@ STOPWORDS = {
     "and",
     "or",
     "when",
+    "by",
+    "with",
+    "through",
+    "where",
+    "based"
+    "its",
+    "it",
+    "that",
+    "this",
+    "as",
+    "such"
 }
 
 
