@@ -20,10 +20,6 @@ from rag.query_expansion import QueryExpander
 from rag.config import DOC_PATH
 from rag.timing import Timer
 
-import nltk
-
-nltk.download("punkt_tab")
-
 # Global model loading
 model: SentenceTransformer = SentenceTransformer(model_name_or_path="all-MiniLM-L6-v2")
 judge = LLMJudge()
@@ -61,7 +57,6 @@ class RAGSystem:
     def query(
         self,
         question: str,
-        expected: str,
         use_hybrid: bool = True,
         use_rerank: bool = True,
         use_multiquery: bool = True,
@@ -106,12 +101,6 @@ class RAGSystem:
         grounded = is_grounded(answer=answer, context_chunks=retrieved_texts)
         grounded_top1 = is_grounded_top1(answer=answer, context_chunks=retrieved_texts)
 
-        llm_eval = self.judge.evaluate(
-            question=question,
-            context_chunks=retrieved_texts,
-            answer=answer,
-            expected=expected,
-        )
         timer.stop(name="evaluation")
         timer.stop(name="total")
 
@@ -121,8 +110,6 @@ class RAGSystem:
             "groundedness": grounded,
             "grounded_top1": grounded_top1,
             "faithfulness": faithfulness_result["faithful"],
-            "llm_groundedness": llm_eval["grounded"],
-            "llm_correct": llm_eval["correct"],
             "retrieved_chunks": retrieved_texts,
             "latency": timer.get(),
         }

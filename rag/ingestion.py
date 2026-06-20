@@ -6,12 +6,12 @@ import numpy as np
 
 def ensure_nltk_resources() -> None:
     try:
-        nltk.data.find("tokenizer/punkt")
+        nltk.data.find("tokenizers/punkt")
     except LookupError:
         nltk.download("punkt", quiet=True)
 
     try:
-        nltk.data.find("tokenizer/punkt_tab")
+        nltk.data.find("tokenizers/punkt_tab")
     except LookupError:
         nltk.download("punkt_tab", quiet=True)
 

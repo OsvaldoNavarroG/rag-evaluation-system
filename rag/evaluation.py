@@ -33,7 +33,6 @@ def run_pipeline(
 
         result: Dict[str, Any] = system.query(
             question=query,
-            expected=expected,
             use_hybrid=use_hybrid,
             use_rerank=use_rerank,
             use_multiquery=use_multiquery,
@@ -49,7 +48,14 @@ def run_pipeline(
         is_correct = evaluate_answer(predicted=answer, expected=expected)
         hit = any(expected.lower() in c.lower() for c in retrieved_texts)
 
-        llm_correct = result["llm_correct"]
+        llm_eval = judge.evaluate(
+            question=query,
+            context_chunks=retrieved_texts,
+            answer=answer,
+            expected=expected,
+        )
+
+        llm_correct = llm_eval["correct"]
 
         # debug llm judge
         if llm_correct != is_correct:
@@ -73,10 +79,10 @@ def run_pipeline(
                 "question": query,
                 "correct": is_correct,
                 "retrieval_hit": hit,
-                "grounded": result["groundedness"],
+                "grounded": result["grounded"],
                 "grounded_top1": result["grounded_top1"],
                 "llm_correct": llm_correct,
-                "llm_grounded": result["llm_groundedness"],
+                "llm_grounded": llm_eval["llm_groundedness"],
                 "faithful": faithful,
                 "has_citations": has_citations,
                 "latency_ms": result["latency"]["total"],
