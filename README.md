@@ -43,8 +43,8 @@ Sentence chunking benchmark:
 | Faithfulness | **0.91** |
 | Groundedness | **0.45** |
 | Top-1 Groundedness | **0.41** |
-| LLM Accuracy | **1.00** |
-| LLM Groundedness | **1.00** |
+| LLM Correctness | **1.00** (benchmark dataset) |
+| LLM Groundedness | **1.00** (benchmark dataset) |
 
 ---
 
@@ -113,6 +113,9 @@ This motivated:
 - LLM-as-judge evaluation
 - citation validation
 - faithfulness checking
+- deeper analysis of evaluation methodology
+
+The project intentionally compares heuristic and semantic evaluation approaches and documents their tradeoffs.
 
 ---
 
@@ -251,7 +254,7 @@ The project includes a configurable benchmark system comparing:
 
 ### LLM-Based
 
-- LLM Accuracy
+- LLM Correctness
 - LLM Groundedness
 
 ### Performance
@@ -387,6 +390,20 @@ This separation keeps the API useful for live inspection while keeping experimen
 
 ---
 
+# ⚠️ Known Limitations
+
+Current limitations of the evaluation framework:
+
+- Faithfulness uses lexical-overlap heuristics
+- Faithfulness is intentionally conservative and may penalize multi-claim answers
+- Citation correctness is not yet evaluated separately
+- Benchmark dataset is relatively small
+- System initialization occurs at import time
+
+These limitations are documented intentionally and are part of the planned roadmap.
+
+---
+
 # 🌐 API Deployment
 
 The project includes a deployed API using **FastAPI**.
@@ -411,13 +428,13 @@ Example response:
 
 ```json
 {
-  "answer": "... [0]",
+  "answer": "...",
   "citations": [0],
   "groundedness": true,
+  "grounded_top1": true,
   "faithfulness": true,
-  "llm_groundedness": true,
   "latency": {
-      ...
+    ...
   }
 }
 ```
@@ -467,6 +484,8 @@ This project demonstrates:
 
 ✅ End-to-end RAG engineering  
 ✅ Retrieval vs ranking analysis  
+✅ Retrieval evaluation design  
+✅ Failure-mode analysis  
 ✅ Hybrid retrieval  
 ✅ Cross-encoder reranking  
 ✅ Hallucination detection  
@@ -475,7 +494,7 @@ This project demonstrates:
 ✅ Latency instrumentation  
 ✅ API deployment  
 ✅ Docker packaging  
-✅ Experimental benchmarking  
+✅ Experimental benchmarking
 
 Most importantly:
 
@@ -505,11 +524,11 @@ uvicorn app.api:app --reload
 
 ---
 
-# 🔧 Next Improvements
+# 🔧 Planned Improvements
 
-## Planned Improvements
-
-- Citation attribution evaluation
+- Citation accuracy evaluation
+- Claim-level attribution analysis
 - Claim-level faithfulness checking
 - Larger benchmark datasets
 - Config-driven experiments
+- Retrieval difficulty benchmarking
