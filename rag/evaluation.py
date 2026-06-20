@@ -33,6 +33,7 @@ def run_pipeline(
 
         result: Dict[str, Any] = system.query(
             question=query,
+            expected=expected,
             use_hybrid=use_hybrid,
             use_rerank=use_rerank,
             use_multiquery=use_multiquery,

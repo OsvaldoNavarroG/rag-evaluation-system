@@ -2,6 +2,9 @@ from typing import Dict, List
 from rag.ingestion import load_documents
 from rag.evaluation import compare_chunking_approaches
 from rag.benchmark_export import export_json
+from rag.ingestion import ensure_nltk_resources
+
+ensure_nltk_resources()
 
 CONFIGS = {
     "dense": {"use_hybrid": False, "use_rerank": False, "use_multiquery": False},

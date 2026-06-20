@@ -61,6 +61,7 @@ class RAGSystem:
     def query(
         self,
         question: str,
+        expected: str,
         use_hybrid: bool = True,
         use_rerank: bool = True,
         use_multiquery: bool = True,
@@ -106,7 +107,10 @@ class RAGSystem:
         grounded_top1 = is_grounded_top1(answer=answer, context_chunks=retrieved_texts)
 
         llm_eval = self.judge.evaluate(
-            question=question, context_chunks=retrieved_texts, answer=answer
+            question=question,
+            context_chunks=retrieved_texts,
+            answer=answer,
+            expected=expected,
         )
         timer.stop(name="evaluation")
         timer.stop(name="total")

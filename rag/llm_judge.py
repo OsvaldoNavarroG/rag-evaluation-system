@@ -17,7 +17,7 @@ class LLMJudge:
     def __init__(self, model="gpt-4o-mini"):
         self.model = model
 
-    def _build_prompt(self, question: str, context: str, answer: str):
+    def _build_prompt(self, question: str, context: str, answer: str, expected: str):
         return f"""
 You are an expert evaluator for question-answering systems.
 
@@ -25,11 +25,12 @@ Given:
 - a question
 - retrieved context
 - an answer
+- the expected answer
 
 Evaluate the answer on two criteria:
 
 1. Correctness:
-Is the answer factually correct with respect to the qusetion?
+Is the answer factually correct with respect to the question?
 
 2. Groundedness:
 Is the answer fully supported by the provided context ONLY?
@@ -46,6 +47,8 @@ Context:
 Answer:
 {answer}
 
+Expected answer:
+{expected}
 ---
 
 Respond ONLY in valid JSON:
@@ -55,11 +58,13 @@ Respond ONLY in valid JSON:
 }}
 """
 
-    def evaluate(self, question: str, context_chunks: List[str], answer: str) -> dict:
+    def evaluate(
+        self, question: str, context_chunks: List[str], answer: str, expected: str
+    ) -> dict:
         context: str = "\n\n".join(context_chunks)
 
         prompt: str = self._build_prompt(
-            question=question, context=context, answer=answer
+            question=question, context=context, answer=answer, expected=expected
         )
 
         try:
@@ -67,7 +72,7 @@ Respond ONLY in valid JSON:
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0,
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
             content = response.choices[0].message.content.strip()
 

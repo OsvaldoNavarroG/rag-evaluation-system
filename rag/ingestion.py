@@ -1,9 +1,19 @@
+import nltk
 from nltk.tokenize import sent_tokenize
 from typing import List
 import numpy as np
 
-# import nltk
-# nltk.download("punkt_tab")
+
+def ensure_nltk_resources() -> None:
+    try:
+        nltk.data.find("tokenizer/punkt")
+    except LookupError:
+        nltk.download("punkt", quiet=True)
+
+    try:
+        nltk.data.find("tokenizer/punkt_tab")
+    except LookupError:
+        nltk.download("punkt_tab", quiet=True)
 
 
 def split_sentences(text) -> List[str]:

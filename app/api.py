@@ -1,9 +1,18 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from typing import Any, Dict
 from app.schemas import QueryRequest, QueryResponse
+from rag.ingestion import ensure_nltk_resources
 from rag.pipeline import run_rag
 
-app = FastAPI(title="RAG Evaluation API", version="1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ensure_nltk_resources()
+    yield
+
+
+app = FastAPI(title="RAG Evaluation API", version="1.0", lifespan=lifespan)
 
 
 @app.get("/")
@@ -22,10 +31,7 @@ def query_rag(request: QueryRequest):
             grounded_top1=result["grounded_top1"],
             faithfulness=result["faithfulness"],
             llm_groundedness=result["llm_groundedness"],
-            latency=result["latency"]
+            latency=result["latency"],
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=500, detail=str(e))
