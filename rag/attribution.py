@@ -1,6 +1,6 @@
 import re
 from rag.helpers import normalize
-from typing import Dict, List, Set
+from typing import Any, Dict, List, Set
 
 STOPWORDS = {
     "the",
@@ -110,3 +110,62 @@ def evaluate_faithfulness(answer: str, chunks: List[str]) -> Dict[str, bool]:
             return {"has_citations": True, "valid_citations": True, "faithful": False}
 
     return {"has_citations": True, "valid_citations": True, "faithful": True}
+
+
+def evaluate_citation_precision(answer: str, chunks: List[str]) -> Dict[str, Any]:
+    """
+    Evaluates whether the answer cites supporting chunks.
+
+    Current definition:
+    - The answer must contain citations,
+    - All cited indices must be valid.
+    - At least one cited chunk must support the answer.
+
+    This is less strict than `evaluate_faithfulness()`, which requires every
+    cited chunk to support the answer.
+
+    Returns:
+    {
+    "has_citations": bool,
+    "valid_citations": bool,
+    "citation_precision": float
+    }
+    """
+    citations: List[int] = list(dict.fromkeys(extract_citations(answer=answer)))
+
+    if not citations:
+        return {
+            "has_citations": False,
+            "valid_citations": False,
+            "citation_precision": False,
+        }
+    for idx in citations:
+        if idx < 0 or idx >= len(chunks):
+            return {
+                "has_citations": True,
+                "valid_citations": False,
+                "citation_precision": False,
+            }
+    citation_supports = {
+        idx: chunk_supports_answer(answer=answer, chunk=chunks[idx])
+        for idx in citations
+    }
+    citation_precision = sum(
+        [sup for sup in citation_supports.values() if sup == True]
+    ) / len(citations)
+
+    if citation_precision < 1.0:
+        print("\n[CITATION PRECISION FAILURE]")
+        print(f"\nAnswer: {answer}")
+        print(f"Citation precision: {citation_precision:.2f}")
+
+        for idx, supported in citation_supports.items():
+            status = "SUPPORTED" if supported else "NOT SUPPORTED"
+            print(f"[{idx}] {status}")
+            print(chunks[idx])
+
+    return {
+        "has_citations": True,
+        "valid_citations": True,
+        "citation_precision": citation_precision,
+    }

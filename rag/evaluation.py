@@ -1,3 +1,4 @@
+from rag.attribution import evaluate_citation_precision
 from rag.ingestion import chunk_text_sentences
 from rag.pipeline import RAGSystem, model, judge, expander
 from typing import Any, Dict, List, Optional
@@ -43,6 +44,10 @@ def run_pipeline(
         faithful = result["faithfulness"]
         has_citations = result["has_citations"]
 
+        citation_result: Dict[str, Any] = evaluate_citation_precision(
+            answer=answer, chunks=retrieved_texts
+        )
+        citation_precision: float = citation_result["citation_precision"]
         # Metrics
         is_correct = evaluate_answer(predicted=answer, expected=expected)
         hit = any(expected.lower() in c.lower() for c in retrieved_texts)
@@ -85,6 +90,7 @@ def run_pipeline(
                 "faithful": faithful,
                 "has_citations": has_citations,
                 "latency_ms": result["latency"]["total"],
+                "citation_precision": citation_precision,
             }
         )
 
@@ -135,4 +141,5 @@ def summarize(results: List[dict]) -> dict:
         "faithfulness": sum(r["faithful"] for r in results) / total,
         "citation_rate": sum(r["has_citations"] for r in results) / total,
         "avg_latency_ms": latency / total,
+        "citation_precision": sum(r["citation_precision"] for r in results) / total,
     }
